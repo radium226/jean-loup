@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+
+main()
+{
+    declare action
+    action="${1}"
+    shift 1
+
+
+    case "${action}" in
+
+        "build-package" )
+                build_package "${@}"
+            ;;
+
+    esac
+}
+
+
+build_package()
+{
+    # To list the supported platform of a Docker image:
+    # > docker run --rm "mplatform/mquery" "..."
+
+    # This should be run first:
+    # > docker run --privileged multiarch/qemu-user-static:latest --reset -p yes --credential yes
+    # The credential option is to allow to run sudo inside Docker
+
+    declare inside_docker=false
+    while true; do
+        case "${1-}" in
+            --inside-docker )
+                    shift 1
+                    inside_docker=true
+                ;;
+
+            * )
+                    break
+                ;;
+        esac
+    done
+
+    declare folder_path
+    folder_path="${1}"
+    shift 1
+
+    if ! ${inside_docker}; then
+        docker run \
+            --rm \
+            --tty \
+            --platform="linux/arm/v7" \
+            --mount type=bind,source="$( pwd )/jean-loup,target=/usr/local/bin/jean-loup" \
+            --mount type=bind,source="${folder_path},target=/tmp/$( basename "${folder_path}" )" \
+            --env UID="$( id -u )" \
+            --env GID="$( id -g )" \
+            --entrypoint="jean-loup" \
+            "lopsided/archlinux:devel" \
+                "build-package" --inside-docker "/tmp/$( basename "${folder_path}" )"
+    else
+        mkdir -p "/tmp/makepkg"
+        groupadd -g "${GID}" -o "makepkg"
+        useradd -m -u "${UID}" -g "${GID}" -o -s "/bin/bash" -d "/tmp/makepkg" "makepkg"
+        chown -R "makepkg:makepkg" \
+            "/tmp/makepkg" \
+            "${folder_path}"
+        
+        cat <<EOF > "/etc/sudoers.d/makepkg"
+Defaults:makepkg !requiretty
+Defaults:makepkg env_keep += "PATH"
+makepkg ALL=(ALL) NOPASSWD:ALL
+EOF
+        chmod 600 "/etc/sudoers.d/makepkg"
+        
+        cd "${folder_path}"
+        pacman -Sy --noconfirm
+        sudo -u "makepkg" makepkg --syncdeps --noconfirm --cleanbuild
+    fi
+}
+
+main "${@}"
