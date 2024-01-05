@@ -1,45 +1,35 @@
-pkgname=rpicam-apps-git
-_pkgname=rpicam-apps
-pkgver=r363.122b835
+pkgname=pisugar-git
+_pkgname=pisugar
+pkgver=r672.7117288
 pkgrel=1
-pkgdesc='This is a small suite of libcamera-based applications to drive the cameras on a Raspberry Pi platform.'
-arch=('armv7h' )
-url='https://github.com/raspberrypi/rpicam-apps'
+pkgdesc="PiSugar power manager in Rust"
+arch=("armv7h")
+url="https://github.com/PiSugar/pisugar-power-manager-rs"
 makedepends=(
     "git"
-    "meson"
-    "libcamera"
-    "boost"
-    "libexif"
-    "libdrm"
-    "libjpeg"
-    "libtiff"
-    "libpng"
+    "cargo"
 )
 
 depends=(
-    "libpisp"
-    "boost"
-    "libexif"
-    "libtiff"
-    "libpng"
-    "libjpeg"
-    "lttng-ust"
+
 )
 
 checkdepends=(
+
 )
+
 optdepends=(
     
 )
-license=('BSD-2-Clause license')
+
+license=("GPL-3.0")
 
 source=(
-  'git+https://github.com/raspberrypi/rpicam-apps.git'
+  "git+https://github.com/PiSugar/pisugar-power-manager-rs.git"
 )
 
 sha256sums=(
-  'SKIP'
+  "SKIP"
 )
 
 provides=("$_pkgname")
@@ -47,25 +37,29 @@ provides=("$_pkgname")
 conflicts=("$_pkgname")
 
 pkgver() {
-    cd "$srcdir/$_pkgname"
+    cd "$srcdir/pisugar-power-manager-rs"
     printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
 }
 
+prepare()
+{
+    cd "$srcdir/pisugar-power-manager-rs"
+    export RUSTUP_TOOLCHAIN=stable
+    cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
 build() {
-    cd "$srcdir/$_pkgname"
-
-    arch-meson build \
-        -Denable_libav=false \
-        -Denable_drm=true \
-        -Denable_egl=false \
-        -Denable_qt=false \
-        -Denable_opencv=false \
-        -Denable_tflite=false
-
-    meson compile -C build
+    cd "$srcdir/pisugar-power-manager-rs"
+    export RUSTUP_TOOLCHAIN=stable
+    export CARGO_TARGET_DIR=target
+    cargo build --frozen --release --all-features
 }
 
 package() {
-    cd "$srcdir/$_pkgname"
-    DESTDIR="$pkgdir" meson install -C build
+    cd "$srcdir/pisugar-power-manager-rs"
+    find target/release \
+        -maxdepth 1 \
+        -executable \
+        -type f \
+        -exec install -Dm0755 -t "$pkgdir/usr/bin/" {} +
 }

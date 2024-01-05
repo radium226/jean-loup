@@ -31,6 +31,14 @@ main()
                 download_file "${@}"
             ;;
 
+        "tp" | "take-picture" )
+                take_picture "${@}"
+            ;;
+
+        "f" | "film" )
+                film "${@}"
+            ;;
+
     esac
 }
 
@@ -55,6 +63,16 @@ download_file()
     shift 1
 
     scp -o "PreferredAuthentications=password" "alarm@192.168.0.48:${file_path}" "."
+}
+
+take_picture()
+{
+    ssh -o "PreferredAuthentications=password" "alarm@192.168.0.48" "rpicam-still --immediate --autofocus-on-capture -e 'jpg' -o -" > "picture.jpg"
+}
+
+film()
+{
+    ssh -o "PreferredAuthentications=password" "alarm@192.168.0.48" "rpicam-vid --nopreview --width 200 --height 100 --timeout 0 --inline --output -" | ffplay -hide_banner -loglevel error -
 }
 
 
@@ -111,13 +129,16 @@ EOF
         
         pacman -Sy --noconfirm
 
-        cd "/tmp/packages/libpisp-git"
-        sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild
+        # cd "/tmp/packages/libpisp-git"
+        # sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild
 
-        cd "/tmp/packages/libcamera-git"
-        sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild
+        # cd "/tmp/packages/libcamera-git"
+        # sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild
         
-        cd "/tmp/packages/rpicam-apps-git"
+        # cd "/tmp/packages/rpicam-apps-git"
+        # sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild
+
+        cd "/tmp/packages/pisugar-git"
         sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild
     fi
 }
