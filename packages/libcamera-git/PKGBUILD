@@ -4,7 +4,7 @@
 
 pkgname=libcamera-git
 _pkgname=libcamera
-pkgver=r4499.577e0c6b
+pkgver=r4472.563cd78e
 pkgrel=1
 pkgdesc='A complex camera support library for Linux, Android, and ChromeOS'
 arch=('armv7h' )
@@ -25,7 +25,14 @@ makedepends=(
     "qt5-base"
     "qt5-tools"
     "sed"
+    "libpisp"
+    "pybind11"
 )
+
+depends=(
+    "boost"
+)
+
 checkdepends=(
 )
 optdepends=(
@@ -40,7 +47,7 @@ optdepends=(
 license=('LGPL2.1')
 options=('!buildflags')
 source=(
-  'git+https://git.linuxtv.org/libcamera.git/'
+  'git+https://github.com/raspberrypi/libcamera.git'
   )
 sha256sums=(
   'SKIP'
@@ -57,13 +64,17 @@ build() {
     cd "$srcdir/$_pkgname"
 
     arch-meson build \
-        -D          b_lto=false \
-        -D          werror=false \
-        -D          documentation=disabled \
-        -D          tracing=disabled \
-	-D          lc-compliance=auto \
-	-D          qcam=auto \
-	-D          pycamera=disabled
+        --buildtype=release \
+        -Dpipelines=rpi/vc4,rpi/pisp \
+        -Dipas=rpi/vc4,rpi/pisp \
+        -Dv4l2=true \
+        -Dgstreamer=enabled \
+        -Dtest=false \
+        -Dlc-compliance=disabled \
+        -Dcam=disabled \
+        -Dqcam=disabled \
+        -Ddocumentation=disabled \
+        -Dpycamera=enabled
 
     meson compile -C build
 }

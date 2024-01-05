@@ -1,0 +1,65 @@
+pkgname=pisugar-git
+_pkgname=pisugar
+pkgver=r672.7117288
+pkgrel=1
+pkgdesc="PiSugar power manager in Rust"
+arch=("armv7h")
+url="https://github.com/PiSugar/pisugar-power-manager-rs"
+makedepends=(
+    "git"
+    "cargo"
+)
+
+depends=(
+
+)
+
+checkdepends=(
+
+)
+
+optdepends=(
+    
+)
+
+license=("GPL-3.0")
+
+source=(
+  "git+https://github.com/PiSugar/pisugar-power-manager-rs.git"
+)
+
+sha256sums=(
+  "SKIP"
+)
+
+provides=("$_pkgname")
+
+conflicts=("$_pkgname")
+
+pkgver() {
+    cd "$srcdir/pisugar-power-manager-rs"
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare()
+{
+    cd "$srcdir/pisugar-power-manager-rs"
+    export RUSTUP_TOOLCHAIN=stable
+    cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+    cd "$srcdir/pisugar-power-manager-rs"
+    export RUSTUP_TOOLCHAIN=stable
+    export CARGO_TARGET_DIR=target
+    cargo build --frozen --release --all-features
+}
+
+package() {
+    cd "$srcdir/pisugar-power-manager-rs"
+    find target/release \
+        -maxdepth 1 \
+        -executable \
+        -type f \
+        -exec install -Dm0755 -t "$pkgdir/usr/bin/" {} +
+}
