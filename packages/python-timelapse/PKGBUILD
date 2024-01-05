@@ -1,0 +1,26 @@
+arch=("any")
+pkgname=python-timelapse
+pkgver=0.0.1
+pkgrel=1
+
+_name=${pkgname#python-}
+
+sources=(
+    "$_name-$pkgver.tar.gz"
+)
+
+makedepends=(
+    "python-build" 
+    "python-installer" 
+    "python-wheel"
+)
+
+build() {
+    cd "$_name-$pkgver"
+    python -m build --wheel --no-isolation
+}
+
+package() {
+    cd "$_name-$pkgver"
+    python -m installer --destdir="$pkgdir" dist/*.whl
+}

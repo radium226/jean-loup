@@ -39,12 +39,24 @@ main()
                 film "${@}"
             ;;
 
+        "tt" | "try-timelapse" )
+                try_timelapse
+            ;;
+
     esac
 }
 
 shell()
 {
     ssh -o "PreferredAuthentications=password" "alarm@192.168.0.48"
+}
+
+try_timelapse()
+{
+    pdm build --project="./timelapse" --no-wheel --dest "./packages/python-timelapse"
+    cd "./packages/python-timelapse"
+    makepkg --syncdeps --noconfirm --cleanbuild
+    cd "-"
 }
 
 upload_file()

@@ -1,0 +1,28 @@
+[project]
+name = "timelapse"
+version = "0.1.0"
+description = "Timelapse"
+authors = [
+    { name = "Radium226", email = "ra@di.um" },
+]
+dependencies = [
+    "pendulum>=3.0.0",
+    "click>=8.1.7",
+    "click-default-group>=1.2.4",
+]
+requires-python = ">=3.11"
+readme = "README.md"
+
+[project.license]
+text = "MIT"
+
+[project.scripts]
+timelapse = "timelapse:app"
+
+[build-system]
+requires = [
+    "pdm-backend",
+]
+build-backend = "pdm.backend"
+
+[tool]
