@@ -1,0 +1,71 @@
+pkgname=rpicam-apps-git
+_pkgname=rpicam-apps
+pkgver=r363.122b835
+pkgrel=1
+pkgdesc='This is a small suite of libcamera-based applications to drive the cameras on a Raspberry Pi platform.'
+arch=('armv7h' )
+url='https://github.com/raspberrypi/rpicam-apps'
+makedepends=(
+    "git"
+    "meson"
+    "libcamera"
+    "boost"
+    "libexif"
+    "libdrm"
+    "libjpeg"
+    "libtiff"
+    "libpng"
+)
+
+depends=(
+    "libpisp"
+    "boost"
+    "libexif"
+    "libtiff"
+    "libpng"
+    "libjpeg"
+    "lttng-ust"
+)
+
+checkdepends=(
+)
+optdepends=(
+    
+)
+license=('BSD-2-Clause license')
+
+source=(
+  'git+https://github.com/raspberrypi/rpicam-apps.git'
+)
+
+sha256sums=(
+  'SKIP'
+)
+
+provides=("$_pkgname")
+
+conflicts=("$_pkgname")
+
+pkgver() {
+    cd "$srcdir/$_pkgname"
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+    cd "$srcdir/$_pkgname"
+
+    arch-meson build \
+        -Denable_libav=false \
+        -Denable_drm=true \
+        -Denable_egl=false \
+        -Denable_qt=false \
+        -Denable_opencv=false \
+        -Denable_tflite=false
+
+    meson compile -C build
+}
+
+package() {
+    cd "$srcdir/$_pkgname"
+    DESTDIR="$pkgdir" meson install -C build
+}

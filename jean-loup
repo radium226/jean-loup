@@ -2,6 +2,9 @@
 
 set -euEo pipefail
 
+SCRIPT_FOLDER_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+export SCRIPT_FOLDER_PATH
+
 
 main()
 {
@@ -12,15 +15,50 @@ main()
 
     case "${action}" in
 
-        "build-package" )
-                build_package "${@}"
+        "build-packages" )
+                build_packages "${@}"
+            ;;
+
+        "s" | "shell" )
+                shell "${@}"
+            ;;
+
+        "u" | "upload" | "upload-file" )
+                upload_file "${@}"
+            ;;
+
+        "d" | "download" | "download-file" )
+                download_file "${@}"
             ;;
 
     esac
 }
 
+shell()
+{
+    ssh -o "PreferredAuthentications=password" "alarm@192.168.0.48"
+}
 
-build_package()
+upload_file()
+{
+    declare file_path
+    file_path="${1}"
+    shift 1
+
+    scp -o "PreferredAuthentications=password" "${file_path}" "alarm@192.168.0.48:"
+}
+
+download_file()
+{
+    declare file_path
+    file_path="${1}"
+    shift 1
+
+    scp -o "PreferredAuthentications=password" "alarm@192.168.0.48:${file_path}" "."
+}
+
+
+build_packages()
 {
     # To list the supported platform of a Docker image:
     # > docker run --rm "mplatform/mquery" "..."
@@ -43,29 +81,26 @@ build_package()
         esac
     done
 
-    declare folder_path
-    folder_path="${1}"
-    shift 1
-
     if ! ${inside_docker}; then
         docker run \
             --rm \
             --tty \
+            --interactive \
             --platform="linux/arm/v7" \
-            --mount type=bind,source="$( pwd )/jean-loup,target=/usr/local/bin/jean-loup" \
-            --mount type=bind,source="${folder_path},target=/tmp/$( basename "${folder_path}" )" \
+            --mount type=bind,source="${SCRIPT_FOLDER_PATH}/jean-loup,target=/usr/local/bin/jean-loup" \
+            --mount type=bind,source="${SCRIPT_FOLDER_PATH}/packages,target=/tmp/packages" \
             --env UID="$( id -u )" \
             --env GID="$( id -g )" \
             --entrypoint="jean-loup" \
             "lopsided/archlinux:devel" \
-                "build-package" --inside-docker "/tmp/$( basename "${folder_path}" )"
+                "build-packages" --inside-docker
     else
         mkdir -p "/tmp/makepkg"
         groupadd -g "${GID}" -o "makepkg"
         useradd -m -u "${UID}" -g "${GID}" -o -s "/bin/bash" -d "/tmp/makepkg" "makepkg"
         chown -R "makepkg:makepkg" \
             "/tmp/makepkg" \
-            "${folder_path}"
+            "/tmp/packages"
         
         cat <<EOF > "/etc/sudoers.d/makepkg"
 Defaults:makepkg !requiretty
@@ -74,9 +109,16 @@ makepkg ALL=(ALL) NOPASSWD:ALL
 EOF
         chmod 600 "/etc/sudoers.d/makepkg"
         
-        cd "${folder_path}"
         pacman -Sy --noconfirm
-        sudo -u "makepkg" makepkg --syncdeps --noconfirm --cleanbuild
+
+        cd "/tmp/packages/libpisp-git"
+        sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild
+
+        cd "/tmp/packages/libcamera-git"
+        sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild
+        
+        cd "/tmp/packages/rpicam-apps-git"
+        sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild
     fi
 }
 
