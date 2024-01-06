@@ -53,10 +53,12 @@ shell()
 
 try_timelapse()
 {
-    pdm build --project="./timelapse" --no-wheel --dest "./packages/python-timelapse"
-    cd "./packages/python-timelapse"
-    makepkg --syncdeps --noconfirm --cleanbuild
+    pdm build --project="./timelapse" --no-wheel --no-clean --dest "../packages/timelapse"
+    cd "./packages/timelapse"
+    makepkg --syncdeps --noconfirm --cleanbuild --force
     cd "-"
+
+    scp -o "PreferredAuthentications=password" "./packages/timelapse/timelapse-0.1.0-1-any.pkg.tar.zst" "alarm@192.168.0.48:"
 }
 
 upload_file()
