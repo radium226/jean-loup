@@ -8,9 +8,13 @@ source=(
     "tmpfiles.conf"
     "sysusers.conf"
     "timelapse.service"
+    "timelapse-press-button@.service"
+    "10-timelapse.rules"
 )
 
 sha256sums=(
+  "SKIP"
+  "SKIP"
   "SKIP"
   "SKIP"
   "SKIP"
@@ -39,6 +43,9 @@ package() {
     install -Dm644 sysusers.conf "$pkgdir/usr/lib/sysusers.d/timelapse.conf"
     install -Dm644 tmpfiles.conf "$pkgdir/usr/lib/tmpfiles.d/timelapse.conf"
     install -Dm644 timelapse.service "$pkgdir/usr/lib/systemd/system/timelapse.service"
+    install -Dm644 timelapse-press-button@.service "$pkgdir/usr/lib/systemd/system/timelapse-press-button@.service"
+    install -Dm644 "10-timelapse.rules" "$pkgdir/etc/polkit-1/rules.d/10-timelapse.rules"
+
 
     cd "$pkgname-$pkgver"
     python -m installer --destdir="$pkgdir" dist/*.whl

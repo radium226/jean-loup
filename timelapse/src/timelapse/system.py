@@ -7,6 +7,8 @@ import os
 import json
 from subprocess import run
 from time import sleep
+from contextlib import contextmanager
+from typing import Generator
 
 
 class PictureFormat(StrEnum):
@@ -26,18 +28,34 @@ class System():
         self.pisugar_socket_path = pisugar_socket_path
         self.pisugar_socket = None
 
+    def communicate_with_pisugar(self, input: str) -> str:
+        with self.open_pisugar_socket() as pisugar_socket:
+            print(f"input={input}")
+            pisugar_socket.sendall(input.encode('utf-8'))
+            output = pisugar_socket.recv(1024).decode('utf-8')
 
-    def __enter__(self):
-        sleep(15)
+            while True:
+                output = pisugar_socket.recv(1024).decode('utf-8')
+                if output != "single":
+                    break
+                            
+            print(f"output={output}")
+            return output
+
+    @contextmanager
+    def open_pisugar_socket(self) -> Generator[socket.socket, None, None]:
         pisugar_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         pisugar_socket.connect(str(self.pisugar_socket_path))
-        self.pisugar_socket = pisugar_socket
+        try:
+            yield pisugar_socket
+        finally:
+            pisugar_socket.close()
+
+    def __enter__(self):
         return self
     
     def __exit__(self, type, value, traceback):
-        if ( pisugar_socket := self.pisugar_socket ):
-            pisugar_socket.close()
-            self.pisugar_socket = None
+        pass
 
     @property
     def wake_up_at(self) -> DateTime:
@@ -46,42 +64,33 @@ class System():
         
     @property
     def auto_power_on(self) -> bool:
-        if ( pisugar_socket := self.pisugar_socket ):
-            input = f"get auto_power_on"
-            print(f"input={input}")
-            pisugar_socket.sendall(input.encode('utf-8'))
-            output = pisugar_socket.recv(1024)
-            print(f"output={output}")
-            return pendulum.parse(output.decode('utf-8').replace("auto_power_on: ", "")) == "true"
-    
+        self.communicate_with_pisugar("get auto_power_on") == "true"
+
+    @property
+    def wake_up_at(self) -> DateTime:
+        if self.communicate_with_pisugar("get rtc_alarm_enabled").replace("rtc_alarm_enabled: ", "") == "true":
+            with self.pisugar_config_path.open("r") as f:
+                return pendulum.parse(json.load(f)["auto_wake_time"])
+        else:
+            return None
+        
+    @wake_up_at.setter
+    def wake_up_at(self, value: DateTime | None) -> None:
+        if value is None:
+            self.communicate_with_pisugar("rtc_alarm_disable")
+        else:
+            self.communicate_with_pisugar(f"rtc_alarm_set {value} 127")
+
     @auto_power_on.setter
     def auto_power_on(self, value: bool) -> None:
-        if ( pisugar_socket := self.pisugar_socket ):
-            input = f"set_auto_power_on {value}".lower()
-            print(f"input={input}")
-            pisugar_socket.sendall(input.encode('utf-8'))
-            output = pisugar_socket.recv(2048)
-            print(f"output={output}")
+       self.communicate_with_pisugar("set_auto_power_on {value}".format(value = "true" if value else "false"))
     
     def now(self) -> DateTime:
-        if ( pisugar_socket := self.pisugar_socket ):
-            input = f"get rtc_time"
-            print(f"input={input}")
-            pisugar_socket.sendall(input.encode('utf-8'))
-            output = pisugar_socket.recv(1024)
-            if output == b'single':
-                output = pisugar_socket.recv(1024)
-            print(f"output={output}")
-            return pendulum.parse(output.decode('utf-8').replace("rtc_time: ", "").replace("single", ""))
+        return pendulum.now()
 
-    def schedule_wakeup(self, at: DateTime) -> None:
-        if ( pisugar_socket := self.pisugar_socket ):
-            input = f"rtc_alarm_set {at} 127"
-            print(f"input={input}")
-            pisugar_socket.sendall(input.encode('utf-8'))
-            output = pisugar_socket.recv(1024)
-            print(f"output={output}")
-        
+        output = self.communicate_with_pisugar("get rtc_time")
+        return pendulum.parse(output.replace("rtc_time: ", ""))
+
     def shutdown(self) -> None:
         command = ["systemctl", "--no-block", "poweroff", "--check-inhibitors=no"]
         process = run(command)

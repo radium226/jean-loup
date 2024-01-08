@@ -6,10 +6,41 @@ from pathlib import Path
 
 from .system import System
 
+
+class ButtonPressType(StrEnum):
+
+    SHORT = auto()
+    LONG = auto()
+    DOUBLE = auto()
+
+
+
 @group(cls=DefaultGroup, default="manage", default_if_no_args=True)
 @pass_context
 def app(context: Context):
     context.obj = SimpleNamespace()
+
+
+@app.command()
+@argument("type", type=ButtonPressType)
+@pass_context
+def press_button(context: Context, type: ButtonPressType):
+    with System() as system:
+        match type:
+            case ButtonPressType.SHORT:
+                # FIXME: In Ad-Hoc folder... 
+                now = system.now()
+                file_path = Path("/var/lib/timelapse") / "{date_time}.jpg".format(date_time=now.to_iso8601_string())
+                system.take_picture(file_path)
+
+            case ButtonPressType.LONG:
+                now = system.now()
+                # system.auto_power_on = False
+                system.wake_up_at = now.add(minutes=5)
+                # system.shutdown()
+
+            case ButtonPressType.DOUBLE:
+                print("double")
 
 
 @app.command()
@@ -30,8 +61,8 @@ def start(context: Context):
     with System() as system:
         now = system.now()
         system.auto_power_on = False
-        system.schedule_wakeup(at=now.add(minutes=2))
-        system.shutdown()
+        system.wake_up_at = now.add(minutes=2)
+        # system.shutdown()
 
 
 @app.command()
@@ -41,17 +72,19 @@ def start(context: Context):
 @option("--delay", "delay_in_minutes", default=2, help="Delay (in minutes)")
 @pass_context
 def manage(context: Context, threshold_in_seconds: int, delay_in_minutes: int, force: bool, dry_run: bool):
-    with System() as system:
-        now = system.now()
-        if force or now.diff(system.wake_up_at).in_seconds() <= threshold_in_seconds:
-            system.auto_power_on = False
-            file_path = Path("/var/lib/timelapse") / "{date_time}.jpg".format(date_time=now.to_iso8601_string())
-            system.take_picture(file_path)
-            system.schedule_wakeup(at=system.now().add(minutes=delay_in_minutes))
-            if not dry_run:
-                print("Actually shuting down...")
-                system.shutdown()
-            else:
-                print("We should have shut down...")
-        else:
-            system.auto_power_on = True
+    pass
+    # with System() as system:
+    #     now = system.now()
+    #     if force or now.diff(system.wake_up_at).in_seconds() <= threshold_in_seconds:
+    #         system.auto_power_on = False
+    #         system.wake_up_at = now.add(minutes=delay_in_minutes)
+    #         file_path = Path("/var/lib/timelapse") / "{date_time}.jpg".format(date_time=now.to_iso8601_string())
+    #         system.take_picture(file_path)
+    #         if not dry_run:
+    #             print("Actually shuting down...")
+    #             system.shutdown()
+    #         else:
+    #             print("We should have shut down...")
+    #     else:
+    #         system.wake_up_at = None
+    #         system.auto_power_on = True
