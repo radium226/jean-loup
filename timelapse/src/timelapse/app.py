@@ -25,6 +25,16 @@ def take_picture(context: Context, file_path: Path | None):
 
 
 @app.command()
+@pass_context
+def start(context: Context):
+    with System() as system:
+        now = system.now()
+        system.auto_power_on = False
+        system.schedule_wakeup(at=now.add(minutes=2))
+        system.shutdown()
+
+
+@app.command()
 @option("--threshold", "threshold_in_seconds", type=int, help="Threshold (in seconds)", default=60)
 @option("--force", "force", is_flag=True, show_default=True, default=False, help="Force shutdown")
 @option("--dry-run", "dry_run", is_flag=True, show_default=True, default=False, help="Dry run")
@@ -34,6 +44,7 @@ def manage(context: Context, threshold_in_seconds: int, delay_in_minutes: int, f
     with System() as system:
         now = system.now()
         if force or now.diff(system.wake_up_at).in_seconds() <= threshold_in_seconds:
+            system.auto_power_on = False
             file_path = Path("/var/lib/timelapse") / "{date_time}.jpg".format(date_time=now.to_iso8601_string())
             system.take_picture(file_path)
             system.schedule_wakeup(at=system.now().add(minutes=delay_in_minutes))
@@ -42,3 +53,5 @@ def manage(context: Context, threshold_in_seconds: int, delay_in_minutes: int, f
                 system.shutdown()
             else:
                 print("We should have shut down...")
+        else:
+            system.auto_power_on = True

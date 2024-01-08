@@ -43,6 +43,25 @@ class System():
     def wake_up_at(self) -> DateTime:
         with open(str(self.pisugar_config_path)) as f:
             return pendulum.parse(json.load(f)["auto_wake_time"])
+        
+    @property
+    def auto_power_on(self) -> bool:
+        if ( pisugar_socket := self.pisugar_socket ):
+            input = f"get auto_power_on"
+            print(f"input={input}")
+            pisugar_socket.sendall(input.encode('utf-8'))
+            output = pisugar_socket.recv(1024)
+            print(f"output={output}")
+            return pendulum.parse(output.decode('utf-8').replace("auto_power_on: ", "")) == "true"
+    
+    @auto_power_on.setter
+    def auto_power_on(self, value: bool) -> None:
+        if ( pisugar_socket := self.pisugar_socket ):
+            input = f"set_auto_power_on {value}".lower()
+            print(f"input={input}")
+            pisugar_socket.sendall(input.encode('utf-8'))
+            output = pisugar_socket.recv(2048)
+            print(f"output={output}")
     
     def now(self) -> DateTime:
         if ( pisugar_socket := self.pisugar_socket ):
@@ -50,8 +69,10 @@ class System():
             print(f"input={input}")
             pisugar_socket.sendall(input.encode('utf-8'))
             output = pisugar_socket.recv(1024)
+            if output == b'single':
+                output = pisugar_socket.recv(1024)
             print(f"output={output}")
-            return pendulum.parse(output.decode('utf-8').replace("rtc_time: ", ""))
+            return pendulum.parse(output.decode('utf-8').replace("rtc_time: ", "").replace("single", ""))
 
     def schedule_wakeup(self, at: DateTime) -> None:
         if ( pisugar_socket := self.pisugar_socket ):
