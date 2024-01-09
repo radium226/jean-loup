@@ -39,12 +39,28 @@ main()
                 film "${@}"
             ;;
 
+        "tt" | "try-timelapse" )
+                try_timelapse
+            ;;
+
     esac
 }
 
 shell()
 {
-    ssh -o "PreferredAuthentications=password" "alarm@192.168.0.48"
+    # ssh -o "PreferredAuthentications=password" "alarm@192.168.0.48"
+    ssh "alarm@192.168.0.48"
+}
+
+try_timelapse()
+{
+    pdm build --project="./timelapse" --no-wheel --no-clean --dest "../packages/timelapse"
+    cd "./packages/timelapse"
+    makepkg --syncdeps --noconfirm --cleanbuild --force
+    cd "-"
+
+    scp "./packages/timelapse/timelapse-0.1.0-1-any.pkg.tar.zst" "root@192.168.0.48:"
+    ssh "root@192.168.0.48" 'pacman -U "timelapse-0.1.0-1-any.pkg.tar.zst" --noconfirm'
 }
 
 upload_file()
