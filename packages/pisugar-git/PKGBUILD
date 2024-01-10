@@ -8,6 +8,8 @@ url="https://github.com/PiSugar/pisugar-power-manager-rs"
 makedepends=(
     "git"
     "cargo"
+    "npm"
+    "nodejs"
 )
 
 depends=(
@@ -26,9 +28,17 @@ license=("GPL-3.0")
 
 source=(
   "git+https://github.com/PiSugar/pisugar-power-manager-rs.git"
+  "tmpfiles.conf"
+  "sysusers.conf"
+  "pisugar-server.service"
+  "pisugar-server-config.json"
 )
 
 sha256sums=(
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
   "SKIP"
 )
 
@@ -46,6 +56,11 @@ prepare()
     cd "$srcdir/pisugar-power-manager-rs"
     export RUSTUP_TOOLCHAIN=stable
     cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+    cd - 
+
+    cd "${srcdir}/pisugar-power-manager-rs/electron"
+    npm install
+    cd -
 }
 
 build() {
@@ -55,8 +70,8 @@ build() {
     cargo build --frozen --release --all-features
     cd -
 
-    cd "${srcdir}/electron"
-    npm run build:web
+    cd "${srcdir}/pisugar-power-manager-rs/electron"
+    NODE_OPTIONS="--openssl-legacy-provider" npm run build:web
     cd -
 }
 
@@ -67,7 +82,18 @@ package() {
         -executable \
         -type f \
         -exec install -Dm0755 -t "$pkgdir/usr/bin/" {} +
+    cd -
 
+    install -Dm644 sysusers.conf "$pkgdir/usr/lib/sysusers.d/pisugar.conf"
+    install -Dm644 tmpfiles.conf "$pkgdir/usr/lib/tmpfiles.d/pisugar.conf"
+    install -Dm644 pisugar-server.service "$pkgdir/usr/lib/systemd/system/pisugar-server.service"
+    install -Dm644 pisugar-server-config.json "$pkgdir/etc/pisugar/server/config.json"
+    
+    find "${srcdir}/pisugar-power-manager-rs/electron"
 
-    mv "${srcdir}/electron/dist" "${pkgdir}/usr/lib/pisugar3"
+    find "${srcdir}/pisugar-power-manager-rs/electron/dist/web" \
+        -type "f" \
+        -printf '%P\n' | \
+    xargs -I {} \
+        install -Dm0644 -T "${srcdir}/pisugar-power-manager-rs/electron/dist/web/{}" "${pkgdir}/usr/lib/pisugar/server/{}"
 }
