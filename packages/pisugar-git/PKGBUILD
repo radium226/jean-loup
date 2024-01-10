@@ -53,6 +53,11 @@ build() {
     export RUSTUP_TOOLCHAIN=stable
     export CARGO_TARGET_DIR=target
     cargo build --frozen --release --all-features
+    cd -
+
+    cd "${srcdir}/electron"
+    npm run build:web
+    cd -
 }
 
 package() {
@@ -62,4 +67,7 @@ package() {
         -executable \
         -type f \
         -exec install -Dm0755 -t "$pkgdir/usr/bin/" {} +
+
+
+    mv "${srcdir}/electron/dist" "${pkgdir}/usr/lib/pisugar3"
 }
