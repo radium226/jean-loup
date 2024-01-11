@@ -15,7 +15,7 @@ main()
 
     case "${action}" in
 
-        "build-packages" )
+        "b" | "build-packages" )
                 build_packages "${@}"
             ;;
 
@@ -69,7 +69,7 @@ upload_file()
     file_path="${1}"
     shift 1
 
-    scp -o "PreferredAuthentications=password" "${file_path}" "alarm@192.168.0.48:"
+    scp "${file_path}" "alarm@192.168.0.48:"
 }
 
 download_file()
@@ -155,7 +155,7 @@ EOF
         # sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild
 
         cd "/tmp/packages/pisugar-git"
-        sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild
+        sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild --clean --force
     fi
 }
 
