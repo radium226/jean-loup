@@ -1,20 +1,31 @@
+from typing import Generator
+from contextlib import contextmanager
+import pendulum
+from pendulum import DateTime
+
+from .logging import info
+
+
 class PiSugar:
 
     def __init__(self):
         pass
 
-    def __enter__(self):
-        self._write_config()
-        return self
     
-    def __exit__(self, type, value, traceback):
-        pass
+    @classmethod
+    @contextmanager
+    def create(cls) -> Generator["PiSugar", None, None]:
+        info("Starting PiSugar service... ")
+        yield PiSugar()
+        info("Stopping PiSugar service... ")
 
-    @property
-    def auto_power_on(self) -> bool:
-        return self._auto_power_on
+    def now(self) -> DateTime:
+        # FIXME: We should ask to the PiSugar RTC
+        return pendulum.now()
     
-    @auto_power_on.setter
-    def auto_power_on(self, value: bool) -> None:
-        self._auto_power_on = value
-        self._write_config()
+    @property
+    def wake_up_at(self) -> DateTime | None:
+        return None
+    
+    def power_off(self, delay: int) -> None:
+        pass
