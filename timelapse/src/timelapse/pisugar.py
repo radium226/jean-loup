@@ -21,6 +21,9 @@ class PiSugar(CanPiSugar):
     @contextmanager
     def create(cls) -> Generator["PiSugar", None, None]:
         info("Starting PiSugar service... ")
+        # FIXME: We need to update the pisugar-server to wait for the socket to be created
+        from time import sleep
+        sleep(10)
         yield PiSugar()
         info("Stopping PiSugar service... ")
 
