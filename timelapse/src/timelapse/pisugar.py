@@ -55,7 +55,7 @@ class PiSugar(CanPiSugar):
                 output = server_socket.recv(1024).decode('utf-8')
                 
             print(f"output={output}")
-            return output
+            return output.replace("long", "").replace("single", "").replace("double", "").strip()
 
 
 
@@ -68,9 +68,12 @@ class PiSugar(CanPiSugar):
 
     @property
     def wakeup_time(self) -> Time | None:
-        if self._communicate_with_server("get rtc_alarm_enabled").replace("rtc_alarm_enabled: ", "") == "true":
-            output = self._communicate_with_server("get rtc_alarm_time")
-            if isinstance(date_time := pendulum.parse(output.replace("rtc_alarm_time: ", "")), DateTime):
+        output = self._communicate_with_server("get rtc_alarm_enabled").replace("rtc_alarm_enabled: ", "").strip()
+        info(f"rtc_alarm_enabled={output}")
+        if output == "true":
+            output = self._communicate_with_server("get rtc_alarm_time").replace("rtc_alarm_time: ", "").strip()
+            info(f"rtc_alarm_time={output}")
+            if isinstance(date_time := pendulum.parse(output), DateTime):
                 return date_time.time()
             else:
                 raise Exception("Unable to get wakeup time! ")

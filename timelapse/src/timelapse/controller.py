@@ -66,6 +66,7 @@ class Controller:
 
     def handle_event(self, event_type: EventType) -> None:
         state = self.current_state
+        info(f"state={state}")
         match (
             state,
             event_type,
