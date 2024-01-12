@@ -74,12 +74,17 @@ class Controller:
                 State(wakeup_time, current_date_time),
                 EventType.POWERED_ON,
             ):
+                info("Powered on! ")
                 current_time = current_date_time.time()
+                delay = current_time - wakeup_time if wakeup_time else None
+                info(f"delay={delay} ")
                 # If it has been powered off for a timelapse
-                if wakeup_time is None or (current_time - wakeup_time).in_seconds() > 60:
+                if delay is None or delay.in_seconds() > 60:
+                    info("Starting services... ")
                     self.start_access_point()
                     self.start_website()
                 else:
+                    info("Taking picture for timelapse and powering off... ")
                     # Taking picture
                     picture_file_path = self._generate_picture_file_path(
                         current_date_time, PictureFormat.PNG
@@ -99,6 +104,7 @@ class Controller:
                 State(_, current_date_time),
                 EventType.CUSTOM_BUTTON_LONG_TAPPED,
             ):
+                info("Custom button long tapped! ")
                 info("Schedule wakeup time! ... ")
                 current_time = current_date_time.time()
                 self.schedule_wakeup(current_time.add(minutes=5))
@@ -107,6 +113,7 @@ class Controller:
                 State(_, current_date_time),
                 EventType.CUSTOM_BUTTON_SINGLE_TAPPED,
             ):
+                info("Custom button single tapped! ")
                 info("Taking picture... ")
                 picture_file_path = self._generate_picture_file_path(
                     current_date_time, PictureFormat.PNG
@@ -117,6 +124,7 @@ class Controller:
                 State(_, _),
                 EventType.POWER_BUTTON_TAPPED,
             ):
+                info("Power button tapped! ")
                 info("Powering off... ")
                 self.power_off()
 
