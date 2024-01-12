@@ -33,7 +33,7 @@ class CanSystem(Protocol):
     def now(self) -> DateTime:
         ...
 
-    def power_off(self) -> None:
+    def power_off(self, delay: int) -> None:
         ...
 
     def start_service(self, service_name: str) -> None:

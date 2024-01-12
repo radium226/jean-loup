@@ -80,7 +80,7 @@ class Controller:
                 delay = current_time - wakeup_time if wakeup_time else None
                 info(f"delay={delay} ")
                 # If it has been powered off for a timelapse
-                if delay is None or delay.in_seconds() > 60:
+                if delay is None or delay.in_seconds() < 0 or delay.in_seconds() > 60:
                     info("Starting services... ")
                     self.start_access_point()
                     self.start_website()
@@ -94,7 +94,7 @@ class Controller:
 
                     # Setting next wakeup time
                     next_wakeup_time = (wakeup_time or current_date_time.time()).add(
-                        minutes=5
+                        minutes=2
                     )
                     self.schedule_wakeup(next_wakeup_time)
 
@@ -108,7 +108,7 @@ class Controller:
                 info("Custom button long tapped! ")
                 info("Schedule wakeup time! ... ")
                 current_time = current_date_time.time()
-                self.schedule_wakeup(current_time.add(minutes=5))
+                self.schedule_wakeup(current_time.add(minutes=2))
 
             case (
                 State(_, current_date_time),
@@ -204,8 +204,8 @@ class Controller:
             return picture
 
     def power_off(self) -> None:
-        self.pisugar.power_off(delay=30)
-        self.system.power_off()
+        self.pisugar.power_off(delay=20)
+        self.system.power_off(delay=5)
 
     def schedule_wakeup(self, time: Time | None) -> None:
         self.pisugar.wakeup_time = time

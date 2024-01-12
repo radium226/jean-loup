@@ -40,8 +40,8 @@ class FakeSystem(CanSystem):
     def now(self) -> DateTime:
         return self.override_now or pendulum.now()
 
-    def power_off(self) -> None:
-        print("Powering off! ")
+    def power_off(self, delay: int) -> None:
+        print(f"Powering off (in {delay}s)! ")
         self.is_powered_on = False
 
     def start_service(self, service_name: str) -> None:

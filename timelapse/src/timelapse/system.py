@@ -24,8 +24,8 @@ class System(CanSystem):
     def now(self) -> DateTime:
         return pendulum.now()
 
-    def power_off(self) -> None:
-        process = run(["systemctl", "poweroff", "-i"])
+    def power_off(self, delay: int) -> None:
+        process = run(["systemctl", "poweroff", "-i", f"--when=+{delay}"])
         if process.returncode != 0:
             raise Exception(f"Unable to power off! ")
 
