@@ -34,11 +34,13 @@ class Controller:
     DEFAULT_PICTURE_FORMAT = PictureFormat.PNG
 
     def __init__(
-        self, pisugar: CanPiSugar, system: CanSystem, camera: CanCamera
+        self, pisugar: CanPiSugar, system: CanSystem, camera: CanCamera, data_folder_path: Path = DEFAULT_DATA_FOLDER_PATH
     ) -> None:
         self.pisugar = pisugar
         self.system = system
         self.camera = camera
+
+        self.data_folder_path = data_folder_path
 
     @property
     def current_state(self) -> State:
@@ -46,10 +48,6 @@ class Controller:
             wakeup_time=self.pisugar.wakeup_time,
             current_date_time=self.pisugar.now(),
         )
-
-    @property
-    def data_folder_path(self) -> Path:
-        return self.DEFAULT_DATA_FOLDER_PATH
 
     @classmethod
     @contextmanager
@@ -74,11 +72,14 @@ class Controller:
         ):
             case (
                 State(wakeup_time, current_date_time),
-                EventType.POWER_ON,
+                EventType.POWERED_ON,
             ):
                 current_time = current_date_time.time()
                 # If it has been powered off for a timelapse
-                if wakeup_time is None or (wakeup_time - current_time).in_minutes() < 1:
+                if wakeup_time is None or (current_time - wakeup_time).in_seconds() > 60:
+                    self.start_access_point()
+                    self.start_website()
+                else:
                     # Taking picture
                     picture_file_path = self._generate_picture_file_path(
                         current_date_time, PictureFormat.PNG
@@ -94,14 +95,9 @@ class Controller:
                     # Powering off
                     self.power_off()
 
-                # Otherwise, we start the maintenance services
-                else:
-                    self.start_access_point()
-                    self.start_website()
-
             case (
                 State(_, current_date_time),
-                EventType.CUSTOM_BUTTON_LONG_TAP,
+                EventType.CUSTOM_BUTTON_LONG_TAPPED,
             ):
                 info("Schedule wakeup time! ... ")
                 current_time = current_date_time.time()
@@ -109,7 +105,7 @@ class Controller:
 
             case (
                 State(_, current_date_time),
-                EventType.CUSTOM_BUTTON_SINGLE_TAP,
+                EventType.CUSTOM_BUTTON_SINGLE_TAPPED,
             ):
                 info("Taking picture... ")
                 picture_file_path = self._generate_picture_file_path(
@@ -119,7 +115,7 @@ class Controller:
 
             case (
                 State(_, _),
-                EventType.POWER_BUTTON_TAP,
+                EventType.POWER_BUTTON_TAPPED,
             ):
                 info("Powering off... ")
                 self.power_off()
@@ -191,6 +187,7 @@ class Controller:
 
         # Optionally saving the picture in a file
         if file_path:
+            file_path.parent.mkdir(parents=True, exist_ok=True)
             with open(file_path, "wb") as file:
                 file.write(picture.getbuffer())
             return None

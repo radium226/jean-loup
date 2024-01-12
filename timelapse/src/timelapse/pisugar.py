@@ -2,12 +2,18 @@ from typing import Generator
 from contextlib import contextmanager
 import pendulum
 from pendulum import Time, DateTime
+from subprocess import run
+import socket
+from pathlib import Path
 
 from .logging import info
 from .capabilities import CanPiSugar
 
 
 class PiSugar(CanPiSugar):
+
+    SERVER_SOCKET_PATH = Path("/run/pisugar/server.sock")
+
     def __init__(self):
         pass
 
@@ -18,17 +24,73 @@ class PiSugar(CanPiSugar):
         yield PiSugar()
         info("Stopping PiSugar service... ")
 
+
+    @contextmanager
+    def _open_server_socket(self) -> Generator[socket.socket, None, None]:
+        server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        server_socket.connect(str(self.SERVER_SOCKET_PATH))
+        try:
+            yield server_socket
+        finally:
+            server_socket.close()
+
+    def _communicate_with_server(self, input: str) -> str:
+        with self._open_server_socket() as server_socket:
+            print(f"input={input}")
+            server_socket.sendall(input.encode('utf-8'))
+            output = server_socket.recv(1024).decode('utf-8')
+
+            while True:
+                output = server_socket.recv(1024).decode('utf-8')
+                if output not in ["single", "long", "double"]:
+                    break
+
+            print(f"output={output}")
+            return output
+
+
+
     def now(self) -> DateTime:
-        # FIXME: We should ask to the PiSugar RTC
-        return pendulum.now()
+        output = self._communicate_with_server("get rtc_time")
+        if isinstance(date_time := pendulum.parse(output.replace("rtc_time: ", "")), DateTime):
+            return date_time
+        else:
+            raise Exception("Unable to get date time! ")
 
     @property
     def wakeup_time(self) -> Time | None:
-        return None
+        if self._communicate_with_server("get rtc_alarm_enabled").replace("rtc_alarm_enabled: ", "") == "true":
+            output = self._communicate_with_server("get rtc_alarm_time")
+            if isinstance(date_time := pendulum.parse(output.replace("rtc_alarm_time: ", "")), DateTime):
+                return date_time.time()
+            else:
+                raise Exception("Unable to get wakeup time! ")
+        else:
+            return None
+        
 
     @wakeup_time.setter
     def wakeup_time(self, value: Time | None) -> None:
-        pass
+        if value:
+            self._communicate_with_server(f"rtc_alarm_set {value}")
+        else:
+            self._communicate_with_server("rtc_alarm_disable")
 
     def power_off(self, delay: int = 0) -> None:
-        pass
+        if delay > 255:
+            raise Exception("Delay must be between 0 and 255! ")
+        
+        # FIXME: It's wrong: we should use I2C directly and do the AND stuff which is in the doc
+        commands = [
+            ["i2cset", "-y", "1", "0x57", "0x0B", "0x29"],
+            ["i2cset", "-y", "1", "0x57", "0x09", "0x%0.2X" % delay],
+            ["i2cset", "-y", "1", "0x57", "0x02", "0x44"],
+        ]
+        for command in commands:
+            process = run(command)
+            if process.returncode != 0:
+                raise Exception("Unable to power off! ")
+        
+        
+
+

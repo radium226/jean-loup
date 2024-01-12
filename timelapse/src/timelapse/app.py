@@ -1,4 +1,4 @@
-from click import group, pass_context, Context, argument, option
+from click import group, pass_context, Context, argument, option, Choice
 from click_default_group import DefaultGroup
 from types import SimpleNamespace
 from pathlib import Path
@@ -21,7 +21,7 @@ def app(context: Context):
 
 
 @app.command()
-@argument("event_type", type=EventType)
+@argument("event_type", type=Choice([event_type for event_type in EventType]))
 @pass_context
 def handle_event(context: Context, event_type: EventType):
     with Controller.create() as controller:
@@ -30,32 +30,40 @@ def handle_event(context: Context, event_type: EventType):
 
 @app.command()
 @option(
-    "--picture-format",
+    "--format",
     "picture_format",
     required=False,
-    default=PictureFormat.PNG,
-    type=PictureFormat,
+    default=None,
+    type=Choice([picture_format for picture_format in PictureFormat]),
     help="Picture format",
 )
 @argument(
-    "file", "file_path", type=Path, required=False, default=None, help="File path"
+    "file_path", type=Path, required=False, default=None
 )
 @pass_context
 def take_picture(
-    context: Context, file_path: Path | None, picture_format: PictureFormat
-):
+    context: Context, file_path: Path | None, picture_format: PictureFormat | None
+):  
     with Controller.create() as controller:
-        # Generating file path if not provided
-        if not file_path:
-            date_time = controller.now()
-            file_stem = "{date_time}".format(
-                date_time=date_time.format("YYYY-MM-DD_HH-mm-ss")
-            )
-            file_extension = FILE_EXTENSIONS_BY_PICTURE_FORMAT[picture_format]
-            file_name = "{stem}.{extension}".format(
-                stem=file_stem, extension=file_extension
-            )
-            file_path = Path.cwd() / file_name
+        if file_path and picture_format:
+            controller.take_picture(file_path, picture_format)
+        elif not file_path and not picture_format:
+            controller.take_picture()
+        elif file_path and not picture_format:
+            controller.take_picture(file_path)
+        elif picture_format and not file_path:
+            controller.take_picture(picture_format)
+        else:
+            raise Exception("Invalid arguments! ")
 
-        # Taking picture
-        controller.take_picture(file_path, picture_format)
+
+@app.command()
+@pass_context
+def access_point(context: Context):
+    print("Starting access point... ")
+
+
+@app.command()
+@pass_context
+def website(context: Context):
+    print("Starting website... ")

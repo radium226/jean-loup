@@ -1,5 +1,6 @@
 from typing import Generator
 from contextlib import contextmanager
+from subprocess import run
 
 import pendulum
 from pendulum import DateTime
@@ -24,13 +25,19 @@ class System(CanSystem):
         return pendulum.now()
 
     def power_off(self) -> None:
-        pass
+        process = run(["systemctl", "poweroff", "-i"])
+        if process.returncode != 0:
+            raise Exception(f"Unable to power off! ")
 
     def start_service(self, service_name: str) -> None:
-        pass
+        process = run(["systemctl", "start", f"{service_name}.service"])
+        if process.returncode != 0:
+            raise Exception(f"Unable to start {service_name} service! ")
 
     def stop_service(self, service_name: str) -> None:
-        pass
+        process = run(["systemctl", "stop", f"{service_name}.service"])
+        if process.returncode != 0:
+            raise Exception(f"Unable to start {service_name} service! ")
 
 
 # import pendulum
