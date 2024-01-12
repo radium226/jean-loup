@@ -4,13 +4,14 @@ from io import BytesIO
 
 from .logging import info
 
+from .capabilities import CanCamera
+from .picture_format import PictureFormat
 
-class Camera:
 
+class Camera(CanCamera):
     def __init__(self):
         pass
 
-    
     @classmethod
     @contextmanager
     def create(cls) -> Generator["Camera", None, None]:
@@ -18,5 +19,7 @@ class Camera:
         yield Camera()
         info("Stopping Camera service... ")
 
-    def take_picture(self) -> BytesIO:
-        pass
+    def take_picture(
+        self, picture_format: PictureFormat = PictureFormat.PNG
+    ) -> BytesIO:
+        raise NotImplementedError()

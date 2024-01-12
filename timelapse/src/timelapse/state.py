@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from pendulum import Time
+from pendulum import Time, DateTime
+
 
 @dataclass
-class State():
-
+class State:
     wakeup_time: Time | None
 
-    current_time: Time
+    current_date_time: DateTime

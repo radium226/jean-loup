@@ -4,14 +4,15 @@ from contextlib import contextmanager
 import pendulum
 from pendulum import DateTime
 
+from .capabilities import CanSystem
+
 from .logging import info
 
-class System:
 
+class System(CanSystem):
     def __init__(self):
         pass
 
-    
     @classmethod
     @contextmanager
     def create(cls) -> Generator["System", None, None]:
@@ -21,8 +22,14 @@ class System:
 
     def now(self) -> DateTime:
         return pendulum.now()
-    
+
     def power_off(self) -> None:
+        pass
+
+    def start_service(self, service_name: str) -> None:
+        pass
+
+    def stop_service(self, service_name: str) -> None:
         pass
 
 
@@ -39,8 +46,6 @@ class System:
 # from typing import Generator
 
 
-
-
 # class PictureFormat(StrEnum):
 
 #     JPEG = auto()
@@ -49,7 +54,7 @@ class System:
 
 # class System():
 
-#     def __init__(self, 
+#     def __init__(self,
 #         pisugar_config_path: Path = Path("/etc/pisugar-server/config.json"),
 #         pisugar_socket_path: Path = Path("/run/pisugar-server/pisugar-server.sock"),
 #     ):
@@ -68,7 +73,7 @@ class System:
 #                 output = pisugar_socket.recv(1024).decode('utf-8')
 #                 if output != "single":
 #                     break
-                            
+
 #             print(f"output={output}")
 #             return output
 
@@ -83,7 +88,7 @@ class System:
 
 #     def __enter__(self):
 #         return self
-    
+
 #     def __exit__(self, type, value, traceback):
 #         pass
 
@@ -91,7 +96,7 @@ class System:
 #     def wake_up_at(self) -> DateTime:
 #         with open(str(self.pisugar_config_path)) as f:
 #             return pendulum.parse(json.load(f)["auto_wake_time"])
-        
+
 #     @property
 #     def auto_power_on(self) -> bool:
 #         self.communicate_with_pisugar("get auto_power_on") == "true"
@@ -103,7 +108,7 @@ class System:
 #                 return pendulum.parse(json.load(f)["auto_wake_time"])
 #         else:
 #             return None
-        
+
 #     @wake_up_at.setter
 #     def wake_up_at(self, value: DateTime | None) -> None:
 #         if value is None:
@@ -114,7 +119,7 @@ class System:
 #     @auto_power_on.setter
 #     def auto_power_on(self, value: bool) -> None:
 #        self.communicate_with_pisugar("set_auto_power_on {value}".format(value = "true" if value else "false"))
-    
+
 #     def now(self) -> DateTime:
 #         return pendulum.now()
 

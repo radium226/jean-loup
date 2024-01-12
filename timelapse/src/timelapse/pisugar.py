@@ -1,17 +1,16 @@
 from typing import Generator
 from contextlib import contextmanager
 import pendulum
-from pendulum import DateTime
+from pendulum import Time, DateTime
 
 from .logging import info
+from .capabilities import CanPiSugar
 
 
-class PiSugar:
-
+class PiSugar(CanPiSugar):
     def __init__(self):
         pass
 
-    
     @classmethod
     @contextmanager
     def create(cls) -> Generator["PiSugar", None, None]:
@@ -22,10 +21,14 @@ class PiSugar:
     def now(self) -> DateTime:
         # FIXME: We should ask to the PiSugar RTC
         return pendulum.now()
-    
+
     @property
-    def wake_up_time(self) -> DateTime | None:
+    def wakeup_time(self) -> Time | None:
         return None
-    
-    def power_off(self, delay: int) -> None:
+
+    @wakeup_time.setter
+    def wakeup_time(self, value: Time | None) -> None:
+        pass
+
+    def power_off(self, delay: int = 0) -> None:
         pass
