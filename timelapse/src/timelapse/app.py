@@ -1,21 +1,29 @@
-from click import group, pass_context, Context
+from click import group, pass_context, Context, argument
 from click_default_group import DefaultGroup
 from types import SimpleNamespace
 
 from .controller import Controller
+from .event_type import EventType
 
 
-@group(cls=DefaultGroup, default="get-by", default_if_no_args=True)
+@group(cls=DefaultGroup, default="handle-event", default_if_no_args=True)
 @pass_context
 def app(context: Context):
     context.obj = SimpleNamespace()
 
 
 @app.command()
+@argument("event_type", type=EventType)
 @pass_context
-def get_by(context: Context):
+def handle_event(context: Context, event_type: EventType):
     with Controller.create() as controller:
-        controller.get_by()
+        controller.handle_event(event_type)
+
+@app.command()
+@pass_context
+def take_picture(context: Context):
+    with Controller.create() as controller:
+        controller.take_picture()
 
 
 # from click import command, option, argument, echo, Choice, group, pass_context, Context, argument

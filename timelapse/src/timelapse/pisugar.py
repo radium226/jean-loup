@@ -24,7 +24,7 @@ class PiSugar:
         return pendulum.now()
     
     @property
-    def wake_up_at(self) -> DateTime | None:
+    def wake_up_time(self) -> DateTime | None:
         return None
     
     def power_off(self, delay: int) -> None:

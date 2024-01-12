@@ -1,5 +1,5 @@
 from pathlib import Path
-from pendulum import DateTime
+from pendulum import DateTime, Time
 from io import BytesIO
 from dataclasses import dataclass
 from enum import StrEnum, auto
@@ -13,16 +13,8 @@ from .pisugar import PiSugar
 from .system import System
 from .camera import Camera
 
-
-class EventType(StrEnum):
-
-    POWER_ON = auto()
-
-    BUTTON_SINGLE_TAP = auto()
-    
-    BUTTON_LONG_TAP = auto()
-
-    BUTTON_DOUBLE_TAP = auto()
+from .event_type import EventType
+from .state import State
 
 
 class Controller():
@@ -34,7 +26,10 @@ class Controller():
 
     @property
     def current_state(self) -> State:
-        pass
+        return State(
+            wakeup_time=self.pisugar.wake_up_time,
+            current_time=self.pisugar.now().time(),
+        )
 
     @classmethod
     @contextmanager
@@ -51,16 +46,46 @@ class Controller():
             )
             info("Stopping Controller... ")
 
-    def get_by(self) -> None:
-        info("Getting by! ")
-
-    # def take_picture(self) -> BytesIO:
-    #     return self.camera.take_picture()
+    def handle_event(self, event_type: EventType) -> None:
 
 
-    # def power_off(self) -> None:
-    #     self.pisugar.power_off(delay=10)
-    #     self.system.power_off()
+        state = self.current_state
+        match (state, event_type, ):
+            case (State(wakeup_time, current_time), EventType.POWER_ON, ):
+                if wakeup_time is None or ( wakeup_time - current_time ).in_minutes() < 1:
+                    self.take_picture()
+                    next_wakeup_time = wakeup_time.add(minutes=5)
+                    self.schedule_wakeup(next_wakeup_time)
+                    self.power_off()
+                else:
+                    self.start_access_point()
+                    self.start_website()
 
-    # def schedule_wakeup(self, at: DateTime | None) -> None:
-    #     self.pisugar.schedule_wakeup(at=at)
+            case (State(_, current_time), EventType.CUSTOM_BUTTON_LONG_TAP, ):
+                info("Schedule wakeup time! ... ")
+                self.schedule_wakeup(current_time)
+
+            case (State(_, _), EventType.CUSTOM_BUTTON_SINGLE_TAP, ):
+                info("Taking picture... ")
+                self.take_picture()
+
+            case (State(_, _), EventType.POWER_BUTTON_TAP, ):
+                info("Powering off... ")
+                self.power_off()
+        
+    
+    def start_access_point(self) -> None:
+        self.system.start_service("timestamp-access-point")
+
+    def start_website(self) -> None:
+        self.system.start_service("timestamp-website")
+
+    def take_picture(self) -> BytesIO:
+        return self.camera.take_picture()
+
+    def power_off(self) -> None:
+        self.pisugar.power_off(delay=10)
+        self.system.power_off()
+
+    def schedule_wakeup(self, time: Time | None) -> None:
+        self.pisugar.schedule_wakeup(time)
