@@ -1,0 +1,4 @@
+[Service]
+Type=oneshot
+User=timelapse
+ExecStart=timelapse hotspot
