@@ -1,0 +1,13 @@
+[Unit]
+DefaultDependencies=no
+Before=shutdown.target
+Requires=pisugar-server.service
+
+
+[Service]
+Type=oneshot
+User=timelapse
+ExecStart=timelapse handle-event powered-on
+
+[Install]
+WantedBy=multi-user.target

@@ -29,7 +29,7 @@ FILE_EXTENSIONS_BY_PICTURE_FORMAT = {
 
 
 class Controller:
-    DEFAULT_DATA_FOLDER_PATH = Path("/var/lib/timestamp")
+    DEFAULT_DATA_FOLDER_PATH = Path("/var/lib/timelapse")
 
     DEFAULT_PICTURE_FORMAT = PictureFormat.PNG
 
@@ -101,7 +101,7 @@ class Controller:
             ):
                 info("Schedule wakeup time! ... ")
                 current_time = current_date_time.time()
-                self.schedule_wakeup(current_time)
+                self.schedule_wakeup(current_time.add(minutes=5))
 
             case (
                 State(_, current_date_time),
@@ -121,10 +121,10 @@ class Controller:
                 self.power_off()
 
     def start_access_point(self) -> None:
-        self.system.start_service("timestamp-access-point")
+        self.system.start_service("timelapse-hotspot")
 
     def start_website(self) -> None:
-        self.system.start_service("timestamp-website")
+        self.system.start_service("timelapse-website")
 
     @overload
     def take_picture(self) -> BytesIO:
@@ -195,7 +195,7 @@ class Controller:
             return picture
 
     def power_off(self) -> None:
-        self.pisugar.power_off(delay=10)
+        self.pisugar.power_off(delay=30)
         self.system.power_off()
 
     def schedule_wakeup(self, time: Time | None) -> None:

@@ -59,8 +59,8 @@ def take_picture(
 
 @app.command()
 @pass_context
-def access_point(context: Context):
-    print("Starting access point... ")
+def hotspot(context: Context):
+    print("Starting hotspot... ")
 
 
 @app.command()

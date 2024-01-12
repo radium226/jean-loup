@@ -35,16 +35,22 @@ class PiSugar(CanPiSugar):
             server_socket.close()
 
     def _communicate_with_server(self, input: str) -> str:
+        print("We are here! ")
         with self._open_server_socket() as server_socket:
             print(f"input={input}")
             server_socket.sendall(input.encode('utf-8'))
             output = server_socket.recv(1024).decode('utf-8')
+            if "Invalid" in output:
+                raise Exception("Invalid output! ")
 
             while True:
-                output = server_socket.recv(1024).decode('utf-8')
+                print(f"tata {output}")
+                print(f"toto {output}")
                 if output not in ["single", "long", "double"]:
+                    print("Youpi")
                     break
-
+                output = server_socket.recv(1024).decode('utf-8')
+                
             print(f"output={output}")
             return output
 
@@ -72,7 +78,8 @@ class PiSugar(CanPiSugar):
     @wakeup_time.setter
     def wakeup_time(self, value: Time | None) -> None:
         if value:
-            self._communicate_with_server(f"rtc_alarm_set {value}")
+            date_time = pendulum.now().set(hour=value.hour, minute=value.minute, second=value.second)
+            self._communicate_with_server(f"rtc_alarm_set {date_time} 127")
         else:
             self._communicate_with_server("rtc_alarm_disable")
 
