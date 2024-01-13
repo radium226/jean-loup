@@ -82,7 +82,11 @@ class HotSpot:
             "--log-queries",
         ]
         dnsmasq_process = Popen(dnsmasq_command)
-        self.exit_stack.callback(lambda: dnsmasq_process.send_signal(SIGTERM))
+        def teardown():
+            dnsmasq_process.send_signal(SIGTERM)
+            dnsmasq_process.wait()
+
+        self.exit_stack.callback(teardown)
 
     def _start_hostapd(self, runtime_folder_path: Path):
         hostapd_config_file_path = runtime_folder_path / "hostapd.conf"
@@ -111,7 +115,10 @@ class HotSpot:
             str(hostapd_config_file_path),
         ]
         hostapd_process = Popen(hostapd_command)
-        self.exit_stack.callback(lambda: hostapd_process.send_signal(SIGTERM))
+        def teardown():
+            hostapd_process.send_signal(SIGTERM)
+            hostapd_process.wait()
+        self.exit_stack.callback(teardown)
 
 
     def wait_for(self) -> None:
@@ -120,7 +127,7 @@ class HotSpot:
         def signal_handler(signum, frame):
             event.set()
         
-        signal(SIGINT, signal_handler)
+        signal(SIGTERM, signal_handler)
         
         event.wait()
     
