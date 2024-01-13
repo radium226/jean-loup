@@ -2,10 +2,12 @@ from click import group, pass_context, Context, argument, option, Choice
 from click_default_group import DefaultGroup
 from types import SimpleNamespace
 from pathlib import Path
+from ipaddress import IPv4Network
 
 from .controller import Controller
 from .event_type import EventType
 from .picture_format import PictureFormat
+from .hotspot import HotSpot
 
 
 FILE_EXTENSIONS_BY_PICTURE_FORMAT = {
@@ -60,7 +62,8 @@ def take_picture(
 @app.command()
 @pass_context
 def hotspot(context: Context):
-    print("Starting hotspot... ")
+    with HotSpot(IPv4Network("192.168.50.1/24", strict=False), "bamboo") as hotspot:
+        hotspot.wait_for()
 
 
 @app.command()
