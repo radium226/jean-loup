@@ -9,6 +9,8 @@ from contextlib import ExitStack
 from pathlib import Path
 from textwrap import dedent
 
+from .logging import info
+
 class HotSpot:
 
     def __init__(self, ip_network: IPv4Network, domain: str, wireless_hardware_device: str = "phy0", ssid="Jean Loup"):
@@ -20,15 +22,35 @@ class HotSpot:
         self.exit_stack = ExitStack()
 
     def __enter__(self):
-        
-        iw_command = ["iw", "phy0", "interface", "add", "ap0", "type", "__ap"]
-        run(iw_command)
-        self.exit_stack.callback(lambda: run(["iw", "phy0", "interface", "del", "ap0"]))
-
-
         runtime_folder_path = Path("/run/timelapse/hotspot")
         runtime_folder_path.mkdir(parents=True, exist_ok=True)
 
+        self._setup_ap0_interface()
+
+        self._start_hostapd(runtime_folder_path)
+        # FIXME: This is a hack to make sure that the hostapd socket is created before dnsmasq tries to connect to it
+        from time import sleep
+        sleep(5)
+        self._start_dnsmasq(runtime_folder_path)
+
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.exit_stack.close()
+
+    def _setup_ap0_interface(self):
+        iw_command = ["iw", "phy0", "interface", "add", "ap0", "type", "__ap"]
+        process = run(iw_command)
+        if process.returncode != 0:
+            raise Exception("Failed to create ap0 interface! ")
+        
+        def teardown():
+            info("Tearing down ap0 interface")
+            run(["iw", "dev", "ap0", "del"])
+
+        self.exit_stack.callback(teardown)
+
+    def _start_dnsmasq(self, runtime_folder_path: Path):
         dnsmasq_config_file_path = runtime_folder_path / "dnsmasq.conf"
         with dnsmasq_config_file_path.open("w") as dnsmasq_config_file:
             dnsmasq_config_file.write(dedent("""\
@@ -43,7 +65,7 @@ class HotSpot:
                 dhcp-range={dhcp_range_min_address},{dhcp_range_max_address},12h
                 dhcp-option=3,{dhcp_address}
                 no-hosts
-                addn-hosts=/home/alarm/hosts
+                # addn-hosts=/home/alarm/hosts
                 expand-hosts                                       
             """).format(
                 domain=self.domain,
@@ -52,25 +74,6 @@ class HotSpot:
                 dhcp_address=self.ip_network[0],
             ))
         self.exit_stack.callback(lambda: dnsmasq_config_file_path.unlink())
-
-        hostapd_config_file_path = runtime_folder_path / "hostapd.conf"
-        with hostapd_config_file_path.open("w") as hostapd_config_file:
-            hostapd_config_file.write(dedent("""\
-                ctrl_interface={control_socket_path}
-                ctrl_interface_group=0
-                interface=ap0
-                driver=nl80211
-                ssid={ssid}
-                hw_mode=g
-                channel=11
-                wmm_enabled=0
-                macaddr_acl=0
-                auth_algs=1
-            """).format(
-                control_socket_path=runtime_folder_path / "hostapd.sock",
-                ssid=self.ssid,
-            ))
-        self.exit_stack.callback(lambda: hostapd_config_file_path.unlink())
 
         dnsmasq_command = [
             "dnsmasq", 
@@ -81,17 +84,35 @@ class HotSpot:
         dnsmasq_process = Popen(dnsmasq_command)
         self.exit_stack.callback(lambda: dnsmasq_process.send_signal(SIGTERM))
 
+    def _start_hostapd(self, runtime_folder_path: Path):
+        hostapd_config_file_path = runtime_folder_path / "hostapd.conf"
+        with hostapd_config_file_path.open("w") as hostapd_config_file:
+            hostapd_config_file.write(dedent("""\
+                ctrl_interface={control_socket_path}
+                ctrl_interface_group=0
+                interface=ap0
+                driver=nl80211
+                ssid={ssid}
+                hw_mode=g
+                channel=6
+                wmm_enabled=0
+                macaddr_acl=0
+                wpa=0
+                auth_algs=1
+            """).format(
+                control_socket_path=runtime_folder_path / "hostapd.sock",
+                ssid=self.ssid,
+            ))
+        self.exit_stack.callback(lambda: hostapd_config_file_path.unlink())
+
         hostapd_command = [
             "hostapd",
+            "-d",
             str(hostapd_config_file_path),
         ]
         hostapd_process = Popen(hostapd_command)
         self.exit_stack.callback(lambda: hostapd_process.send_signal(SIGTERM))
 
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.exit_stack.close()
 
     def wait_for(self) -> None:
         event = Event()
