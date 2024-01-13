@@ -38,6 +38,7 @@ depends=(
     "python-click-default-group"
     "python-click"
     "python-pendulum"
+    "python-cherrypy"
 )
 
 build() {

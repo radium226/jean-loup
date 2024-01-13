@@ -8,6 +8,7 @@ from .controller import Controller
 from .event_type import EventType
 from .picture_format import PictureFormat
 from .hotspot import HotSpot
+from .website import Website
 
 
 FILE_EXTENSIONS_BY_PICTURE_FORMAT = {
@@ -69,4 +70,5 @@ def hotspot(context: Context):
 @app.command()
 @pass_context
 def website(context: Context):
-    print("Starting website... ")
+    with Website() as website:
+        website.wait_for()

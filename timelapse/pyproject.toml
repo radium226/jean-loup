@@ -9,6 +9,7 @@ dependencies = [
     "pendulum>=3.0.0",
     "click>=8.1.7",
     "click-default-group>=1.2.4",
+    "cherrypy>=18.9.0",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
