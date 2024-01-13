@@ -94,7 +94,7 @@ class Controller:
 
                     # Setting next wakeup time
                     next_wakeup_time = (wakeup_time or current_date_time.time()).add(
-                        minutes=2
+                        minutes=30
                     )
                     self.schedule_wakeup(next_wakeup_time)
 
@@ -108,7 +108,7 @@ class Controller:
                 info("Custom button long tapped! ")
                 info("Schedule wakeup time! ... ")
                 current_time = current_date_time.time()
-                self.schedule_wakeup(current_time.add(minutes=2))
+                self.schedule_wakeup(current_time.add(minutes=30))
 
             case (
                 State(_, current_date_time),
