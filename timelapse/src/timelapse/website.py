@@ -13,7 +13,7 @@ class API():
     @expose
     def pictures(self):
         match request.method:
-            case "GET":
+            case "POST":
                 response.headers["Content-Type"] = "image/png"
                 picture = self.camera.take_picture(PictureFormat.PNG)
                 return picture
@@ -32,11 +32,12 @@ class Root():
 
 class Website:
 
-    def __init__(self, port: int = 8080):
+    def __init__(self, fake: bool = False, port: int = 8080):
         self.exit_stack = ExitStack()
+        self.fake = fake
 
     def __enter__(self):
-        camera = self.exit_stack.enter_context(Camera.create())
+        camera = self.exit_stack.enter_context(Camera.create(self.fake))
         tree.mount(Root(), "/")
         tree.mount(API(camera), "/api")
         server.socket_host = "0.0.0.0"

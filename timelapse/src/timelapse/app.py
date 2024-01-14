@@ -68,7 +68,8 @@ def hotspot(context: Context):
 
 
 @app.command()
+@option("--fake", is_flag=True, default=False)
 @pass_context
-def website(context: Context):
-    with Website() as website:
+def website(context: Context, fake: bool):
+    with Website(fake) as website:
         website.wait_for()
