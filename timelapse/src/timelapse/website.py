@@ -1,5 +1,4 @@
-from cherrypy import quickstart, expose, request, response, tree, engine, server
-from io import BytesIO
+from cherrypy import expose, request, response, tree, engine, server
 from contextlib import ExitStack
 
 from .camera import Camera

@@ -1,5 +1,5 @@
 from pathlib import Path
-from pendulum import DateTime, Time
+from pendulum import DateTime
 from io import BytesIO
 
 from contextlib import contextmanager, ExitStack
@@ -32,6 +32,8 @@ class Controller:
     DEFAULT_DATA_FOLDER_PATH = Path("/var/lib/timelapse")
 
     DEFAULT_PICTURE_FORMAT = PictureFormat.PNG
+
+    DEFAULT_DELAY_IN_MINUTES = 30
 
     def __init__(
         self, pisugar: CanPiSugar, system: CanSystem, camera: CanCamera, data_folder_path: Path = DEFAULT_DATA_FOLDER_PATH
@@ -72,6 +74,23 @@ class Controller:
             event_type,
         ):
             case (
+                State(wakeup_time, current_date_time), 
+                EventType.TIMER_TRIGGERED,
+            ):
+                info("Timer triggered! ")
+                picture_file_path = self._generate_picture_file_path(
+                    current_date_time, PictureFormat.PNG
+                )
+                self.take_picture(picture_file_path)
+
+                # Setting next wakeup time
+                wakeup_time = wakeup_time or current_date_time.time()
+                wakeup_date_time = DateTime.combine(current_date_time.date(), wakeup_time)
+                next_wakeup_time = wakeup_date_time.add(minutes=self.DEFAULT_DELAY_IN_MINUTES)
+                self.schedule_wakeup(next_wakeup_time)
+                
+
+            case (
                 State(wakeup_time, current_date_time),
                 EventType.POWERED_ON,
             ):
@@ -84,6 +103,10 @@ class Controller:
                     info("Starting services... ")
                     self.start_access_point()
                     self.start_website()
+                    if wakeup_time:
+                        day_offset = 1 if current_time > wakeup_time else 0
+                        wakeup_date_time = DateTime.combine(current_date_time.date(), wakeup_time).add(days=day_offset)
+                        self.schedule_wakeup(wakeup_date_time)
                 else:
                     info("Taking picture for timelapse and powering off... ")
                     # Taking picture
@@ -93,9 +116,9 @@ class Controller:
                     self.take_picture(picture_file_path)
 
                     # Setting next wakeup time
-                    next_wakeup_time = (wakeup_time or current_date_time.time()).add(
-                        minutes=30
-                    )
+                    wakeup_time = wakeup_time or current_date_time.time()
+                    wakeup_date_time = DateTime.combine(current_date_time.date(), wakeup_time)
+                    next_wakeup_time = wakeup_date_time.add(minutes=self.DEFAULT_DELAY_IN_MINUTES)
                     self.schedule_wakeup(next_wakeup_time)
 
                     # Powering off
@@ -107,8 +130,8 @@ class Controller:
             ):
                 info("Custom button long tapped! ")
                 info("Schedule wakeup time! ... ")
-                current_time = current_date_time.time()
-                self.schedule_wakeup(current_time.add(minutes=30))
+                first_wakeup_time = current_date_time.add(minutes=self.DEFAULT_DELAY_IN_MINUTES)
+                self.schedule_wakeup(first_wakeup_time)
 
             case (
                 State(_, current_date_time),
@@ -207,8 +230,13 @@ class Controller:
         self.pisugar.power_off(delay=20)
         self.system.power_off(delay=5)
 
-    def schedule_wakeup(self, time: Time | None) -> None:
-        self.pisugar.wakeup_time = time
+    def schedule_wakeup(self, date_time: DateTime | None) -> None:
+        self.pisugar.wakeup_time = date_time.time() if date_time else None
+        if date_time:
+            self.system.schedule_service("timelapse-handle-event@timer-triggered", date_time)
+        else:
+            # FIXME: We're fucked here!
+            pass
 
     def _generate_picture_file_path(
         self, current_date_time: DateTime, picture_format: PictureFormat

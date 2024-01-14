@@ -27,7 +27,7 @@ class System(CanSystem):
     def power_off(self, delay: int) -> None:
         process = run(["systemctl", "poweroff", "-i", f"--when=+{delay}"])
         if process.returncode != 0:
-            raise Exception(f"Unable to power off! ")
+            raise Exception("Unable to power off! ")
 
     def start_service(self, service_name: str) -> None:
         process = run(["systemctl", "start", f"{service_name}.service"])
@@ -38,6 +38,17 @@ class System(CanSystem):
         process = run(["systemctl", "stop", f"{service_name}.service"])
         if process.returncode != 0:
             raise Exception(f"Unable to start {service_name} service! ")
+        
+    def schedule_service(self, service_name: str, date_time: DateTime) -> None:
+        command = [
+            "systemd-run", 
+            "--on-calendar={date_time}".format(date_time=date_time.format("YYYY-MM-DD[T]HH:mm:ss")),
+            f"--unit={service_name}.service",
+        ]
+        process = run(command
+                      )
+        if process.returncode != 0:
+            raise Exception(f"Unable to schedule {service_name} service! ")
 
 
 # import pendulum

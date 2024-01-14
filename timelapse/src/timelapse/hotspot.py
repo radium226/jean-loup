@@ -1,10 +1,7 @@
-from contextlib import contextmanager
-from typing import Generator
-from signal import signal, SIGINT, SIGTERM
+from signal import signal, SIGTERM
 from threading import Event
 from subprocess import Popen, run
 from ipaddress import IPv4Network
-from tempfile import NamedTemporaryFile
 from contextlib import ExitStack
 from pathlib import Path
 from textwrap import dedent

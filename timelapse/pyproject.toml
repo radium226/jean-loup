@@ -32,6 +32,21 @@ requires = [
 ]
 build-backend = "pdm.backend"
 
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+
+
 [[tool.mypy.overrides]]
 module = "click_default_group.*"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "cherrypy.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "--capture=no"
+testpaths = [
+    "tests",
+]
