@@ -36,11 +36,15 @@ class HotSpot:
         self.exit_stack.close()
 
     def _setup_ap0_interface(self):
-        iw_command = ["iw", "phy0", "interface", "add", "ap0", "type", "__ap"]
-        process = run(iw_command)
-        if process.returncode != 0:
-            raise Exception("Failed to create ap0 interface! ")
-        
+        commands = [
+            ["iw", "phy0", "interface", "add", "ap0", "type", "__ap"],
+            ["ip", "addr", "add", f"{self.ip_network[2]}/{self.ip_network.prefixlen}", "dev", "ap0"],
+        ]
+        for command in commands:
+            process = run(command)
+            if process.returncode != 0:
+                raise Exception("Failed to create ap0 interface! ")
+            
         def teardown():
             info("Tearing down ap0 interface")
             run(["iw", "dev", "ap0", "del"])
@@ -66,9 +70,9 @@ class HotSpot:
                 expand-hosts                                       
             """).format(
                 domain=self.domain,
-                dhcp_range_min_address=self.ip_network[1],
+                dhcp_range_min_address=self.ip_network[2],
                 dhcp_range_max_address=self.ip_network[-1],
-                dhcp_address=self.ip_network[0],
+                dhcp_address=self.ip_network[1],
             ))
         self.exit_stack.callback(lambda: dnsmasq_config_file_path.unlink())
 

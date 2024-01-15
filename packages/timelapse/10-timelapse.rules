@@ -1,6 +1,6 @@
 polkit.addRule(function(action, subject) {
   if (
-    action.id == "org.freedesktop.systemd1.manage-units" &&
+    action.id == "org.freedesktop.systemd1.manage-units" || action.id == "org.freedesktop.systemd1.manage-unit-files" &&
     RegExp('timelapse-.*.service').test(action.lookup("unit")) === true &&
     ( subject.isInGroup("pisugar") || subject.isInGroup("timelapse") )
   ) {

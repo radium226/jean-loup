@@ -42,9 +42,10 @@ class System(CanSystem):
     def schedule_service(self, service_name: str, date_time: DateTime) -> None:
         command = [
             "systemd-run", 
-            "--on-calendar={date_time}".format(date_time=date_time.format("YYYY-MM-DD[T]HH:mm:ss")),
+            "--on-calendar={date_time}".format(date_time=date_time.format("YYYY-MM-DD[ ]HH:mm:ss")),
             f"--unit={service_name}.service",
         ]
+        info(" ".join(command))
         process = run(command
                       )
         if process.returncode != 0:
