@@ -33,7 +33,7 @@ class Camera(CanCamera):
     ) -> BytesIO:
         if self.fake:
             with ( Path(__file__).parent / "fake.png" ).open("rb") as file:
-                sleep(5)
+                sleep(1)
                 return BytesIO(file.read())
         else:
             command = [
