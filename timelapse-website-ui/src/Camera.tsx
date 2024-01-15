@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
-import reactLogo from './assets/react.svg'
+import { useState } from 'react'
 import './App.css'
 
 import { Client } from "./client"

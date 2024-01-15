@@ -69,7 +69,8 @@ def hotspot(context: Context):
 
 @app.command()
 @option("--fake", is_flag=True, default=False)
+@option("--ui-folder", "ui_folder_path", type=Path, default=None)
 @pass_context
-def website(context: Context, fake: bool):
-    with Website(fake) as website:
+def website(context: Context, fake: bool, ui_folder_path: Path | None):
+    with Website(fake=fake, ui_folder_path=ui_folder_path) as website:
         website.wait_for()
