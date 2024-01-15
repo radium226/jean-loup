@@ -40,14 +40,15 @@ class System(CanSystem):
             raise Exception(f"Unable to start {service_name} service! ")
         
     def schedule_service(self, service_name: str, date_time: DateTime) -> None:
+        run(["systemctl", "stop", f"{service_name}.timer"])
+        
         command = [
             "systemd-run", 
             "--on-calendar={date_time}".format(date_time=date_time.format("YYYY-MM-DD[ ]HH:mm:ss")),
             f"--unit={service_name}.service",
         ]
         info(" ".join(command))
-        process = run(command
-                      )
+        process = run(command)
         if process.returncode != 0:
             raise Exception(f"Unable to schedule {service_name} service! ")
 
