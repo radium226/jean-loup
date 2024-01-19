@@ -1,6 +1,7 @@
 from pathlib import Path
 from pendulum import DateTime
 from io import BytesIO
+from subprocess import run, PIPE
 
 from contextlib import contextmanager, ExitStack
 from typing import Generator, overload
@@ -253,3 +254,29 @@ class Controller:
 
     def now(self) -> DateTime:
         return self.pisugar.now()
+
+    def save_picture(self, content: BytesIO) -> Path:
+        current_date_time = self.pisugar.now()
+
+        file_path = self._generate_picture_file_path(current_date_time, PictureFormat.PNG) # FIXME: We need to get rid of this PNG stuff
+        with file_path.open("wb") as f:
+            f.write(content.read())
+        return file_path
+    
+    def list_pictures(self) -> list[Path]:
+        return list((self.data_folder_path / "pictures").glob("*.png"))
+    
+    def generate_tumbnail(self, file_path: Path) -> BytesIO:
+        command = [
+            "ffmpeg",
+            "-hide_banner", "-loglevel", "error",
+            "-i", f"{file_path}",
+            "-vf",
+            "scale=320:-1",
+            "-frames:v", "1",
+            "-f", "image2", 
+            "-c", "png",
+            "-",
+        ]
+        
+        return BytesIO(run(command, stdout=PIPE, check=True).stdout)

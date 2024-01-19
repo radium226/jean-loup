@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 
 import { Client } from "./client"
+import { toDataURL } from './utils'
 
 import Spinner from './Spinner'
 import Picture from './Picture'
@@ -11,20 +12,7 @@ export interface CameraProps {
 }
 
 
-function toDataURL(blob: Blob): Promise<string> {
-    return new Promise((onSuccess, onError) => {
-        try {
-            const reader = new FileReader()
-            reader.onload = () => {
-            const base64 = reader.result as string
-            onSuccess(base64)
-        }
-            reader.readAsDataURL(blob)
-        } catch(e) {
-            onError(e)
-        }
-    })
-}
+
 
 function Camera ({ client }: CameraProps) {
     const [isTakingPicture, setIsTakingPicture] = useState(false)
@@ -32,12 +20,12 @@ function Camera ({ client }: CameraProps) {
 
     async function takePicture() {
         setIsTakingPicture(true)
-        const blob = await client.takePicture()
+        const picture = await client.takePicture()
+        const blob = await client.downloadPictureContent(picture)
         const dataURL = await toDataURL(blob)
         setPictureSource(dataURL)
         setIsTakingPicture(false)
     }
-
 
     return (
         <div>

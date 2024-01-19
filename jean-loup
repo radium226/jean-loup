@@ -63,6 +63,7 @@ try_timelapse()
 
     scp "./packages/timelapse/timelapse-0.1.0-1-any.pkg.tar.zst" "root@192.168.0.48:"
     ssh "root@192.168.0.48" 'pacman -U "timelapse-0.1.0-1-any.pkg.tar.zst" --noconfirm'
+    ssh "root@192.168.0.48" 'systemctl restart timelapse-website.service'
 }
 
 upload_file()

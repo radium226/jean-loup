@@ -41,6 +41,8 @@ depends=(
     "python-click"
     "python-pendulum"
     "python-cherrypy"
+    "python-routes"
+    "ffmpeg"
 )
 
 build() {
