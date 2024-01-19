@@ -10,6 +10,7 @@ dependencies = [
     "click>=8.1.7",
     "click-default-group>=1.2.4",
     "cherrypy>=18.9.0",
+    "routes>=2.5.1",
 ]
 requires-python = ">=3.11"
 readme = "README.md"

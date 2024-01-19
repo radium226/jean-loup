@@ -8,7 +8,7 @@ from .controller import Controller
 from .event_type import EventType
 from .picture_format import PictureFormat
 from .hotspot import HotSpot
-from .website import Website
+from .website2 import Website
 
 
 FILE_EXTENSIONS_BY_PICTURE_FORMAT = {
@@ -72,5 +72,5 @@ def hotspot(context: Context):
 @option("--ui-folder", "ui_folder_path", type=Path, default=None)
 @pass_context
 def website(context: Context, fake: bool, ui_folder_path: Path | None):
-    with Website(fake=fake, ui_folder_path=ui_folder_path) as website:
+    with Website(ui_folder_path) as website:
         website.wait_for()

@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:5065491bc7bb30aa9ae8325f8bba955e2f900b9dd5d021d933a7e57745e2444a"
+content_hash = "sha256:97203d0734b01fe959a492f68ff738dafe27f53cd5b43c4410113cd1d495c756"
 
 [[package]]
 name = "annotated-types"
@@ -453,6 +453,30 @@ groups = ["default"]
 files = [
     {file = "pytz-2023.3.post1-py2.py3-none-any.whl", hash = "sha256:ce42d816b81b68506614c11e8937d3aa9e41007ceb50bfdcb0749b921bf646c7"},
     {file = "pytz-2023.3.post1.tar.gz", hash = "sha256:7b4fddbeb94a1eba4b557da24f19fdf9db575192544270a9101d8509f9f43d7b"},
+]
+
+[[package]]
+name = "repoze-lru"
+version = "0.7"
+summary = "A tiny LRU cache implementation and decorator"
+groups = ["default"]
+files = [
+    {file = "repoze.lru-0.7-py3-none-any.whl", hash = "sha256:f77bf0e1096ea445beadd35f3479c5cff2aa1efe604a133e67150bc8630a62ea"},
+    {file = "repoze.lru-0.7.tar.gz", hash = "sha256:0429a75e19380e4ed50c0694e26ac8819b4ea7851ee1fc7583c8572db80aff77"},
+]
+
+[[package]]
+name = "routes"
+version = "2.5.1"
+summary = "Routing Recognition and Generation Tools"
+groups = ["default"]
+dependencies = [
+    "repoze-lru>=0.3",
+    "six",
+]
+files = [
+    {file = "Routes-2.5.1-py2.py3-none-any.whl", hash = "sha256:fab5a042a3a87778eb271d053ca2723cadf43c95b471532a191a48539cb606ea"},
+    {file = "Routes-2.5.1.tar.gz", hash = "sha256:b6346459a15f0cbab01a45a90c3d25caf980d4733d628b4cc1952b865125d053"},
 ]
 
 [[package]]

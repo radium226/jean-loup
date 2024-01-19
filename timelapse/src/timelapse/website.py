@@ -1,15 +1,26 @@
 from cherrypy import expose, request, response, tree, engine, server
 from contextlib import ExitStack
 from pathlib import Path
+from enum import StrEnum, auto
+from queue import Queue
 
 from .camera import Camera
 from .picture_format import PictureFormat
+from .timelapse import Timelapse
+
+
+class WorkerStatus(StrEnum):
+    WORKING = auto()
+
+    DONE = auto()
 
 
 class API():
 
-    def __init__(self, camera: Camera):
+    def __init__(self, camera: Camera, timelapse: Timelapse):
         self.camera = camera
+        self.timelapse = timelapse
+        self.
 
     @expose
     def pictures(self):
@@ -23,6 +34,21 @@ class API():
                 response.code = 404
                 return None
         
+
+    @expose
+    def timelapses(self):
+        match request.method:
+            case "POST":
+                worker = Worker()
+                self.workers.append({ worker.id: worker })
+                response.headers["Content-Type"] = "application/json"
+                return {
+                    "id": worker.id,
+                }
+
+            case _:
+                response.code = 404
+                return None
 
 class UI():
     pass

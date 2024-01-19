@@ -1,21 +1,45 @@
 import './App.css'
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Outlet,
+} from "react-router-dom"
 
+import Layout from "./Layout"
 import { Client } from './client'
-import Camera from './Camera'
-  
+import Camera from "./Camera"
+import Timelapse from './Timelapse'
+import Gallery from './Gallery'
+
+
 
 function App() {
   const client = new Client()
-  return (
-    <div>
-      <header className="sticky top-0 border-b mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
-        <h1>Timelapse</h1>
-      </header>
-      <main className="p-4">
-        <Camera client={ client } />
-      </main>  
-    </div>
-  )
+  const router = createBrowserRouter([
+    {
+      path: "/",
+      element: (
+        <Layout>
+          <Outlet />
+        </Layout>
+      ),
+      children: [
+        {
+          path: "/camera",
+          element: <Camera client={ client } />,
+        },
+        {
+          path: "/timelapse",
+          element: <Timelapse client={ client } />,
+        },
+        {
+          path: "/gallery",
+          element: <Gallery client={ client } />,
+        }
+      ]
+    },
+  ]);
+  return <RouterProvider router={router} />
 }
 
 export default App
