@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+
+forward_signal_to_child()
+{
+    test -f "/tmp/app.pid" && kill -TERM "$( <"/tmp/app.pid" )"
+}
+
+log()
+{
+    declare message
+    message="${*}"
+
+    echo "${message}" >&2
+}
+
+main()
+{
+    declare timeout
+    timeout=5
+
+    declare socket_path
+    socket_path="/run/pisugar/server.sock"
+
+    declare max_retry
+    max_retry=5
+
+    while true; do
+        case "${1}" in
+            -s | --socket-path )
+                    socket_path=${2}
+                    shift 2
+                ;;
+
+            -t | --timeout )
+                    timeout=${2}
+                    shift 2
+                ;;
+
+            -m | --max_retry )
+                    max_retry=${2}
+                    shift 2
+                ;;
+
+            -- )
+                    shift 1
+                    break
+                ;;
+        esac
+    done
+
+    declare app_pid
+    log "Starting app... "
+    { "${@}" ; } & 
+    app_pid=${!}
+    log "app_pid=${app_pid}"
+
+    trap "kill -TERM ${app_pid}" SIGTERM
+
+    for i in $( seq 1 ${max_retry} ); do
+        log "Waiting for socket... "
+        if [[ -S "${socket_path}" ]]; then
+            declare input
+            input="get firmware_version"
+            
+            declare output
+            if output=$( timeout "${timeout}" nc -q 0 -U "${socket_path}" <<<"${input}" ); then
+                if grep -Eq '^firmware_version: ' <<<"${output}"; then
+                    log "OK :)"
+                    systemd-notify --ready
+                    break
+                fi
+            fi
+        fi
+        echo "KO :("
+        sleep 0.5
+    done
+
+    log "Waiting for app... "
+    wait ${app_pid}
+}

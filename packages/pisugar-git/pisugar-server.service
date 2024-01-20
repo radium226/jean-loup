@@ -3,9 +3,10 @@ Description=PiSugar Server
 
 [Service]
 User=pisugar
-ExecStart=/usr/bin/pisugar-server --model "PiSugar 3" --web "/usr/lib/pisugar/server" --uds "%t/pisugar/server.sock" --config "/etc/pisugar/server/config.json" --http "0.0.0.0:8765"
+ExecStart=/usr/lib/timelapse/wait-for -s "%t/pisugar/server.sock" -- /usr/bin/pisugar-server --model "PiSugar 3" --web "/usr/lib/pisugar/server" --uds "%t/pisugar/server.sock" --config "/etc/pisugar/server/config.json" --http "0.0.0.0:8765"
 ExecStopPost=rm "%t/pisugar/pisugar.sock"
-Type=simple
+Type=notify
+NotifyAccess=all
 UMask=0007 
 
 [Install]

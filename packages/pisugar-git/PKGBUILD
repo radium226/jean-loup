@@ -32,9 +32,11 @@ source=(
   "sysusers.conf"
   "pisugar-server.service"
   "pisugar-server-config.json"
+  "notify-when-ready"
 )
 
 sha256sums=(
+  "SKIP"
   "SKIP"
   "SKIP"
   "SKIP"
@@ -83,6 +85,8 @@ package() {
         -type f \
         -exec install -Dm0755 -t "$pkgdir/usr/bin/" {} +
     cd -
+
+    install -Dm0755 -t "$pkgdir/usr/lib/timelapse/" "$srcdir/notify-when-ready"
 
     install -Dm644 sysusers.conf "$pkgdir/usr/lib/sysusers.d/pisugar.conf"
     install -Dm644 tmpfiles.conf "$pkgdir/usr/lib/tmpfiles.d/pisugar.conf"
