@@ -1,14 +1,12 @@
 from contextlib import ExitStack
 
-from cherrypy import expose, request, response, tree, engine, server, dispatch, NotFound
+from cherrypy import expose, response, tree, engine, server, dispatch, NotFound
 from dataclasses import dataclass
 from pendulum import DateTime
 import json
 
 from typing import TypeAlias
-from io import BytesIO
 from pathlib import Path
-from cherrypy import tools
 import pendulum
 
 from mimetypes import guess_type
@@ -36,7 +34,7 @@ class APIEndpoint():
         self.controller = controller
 
 
-    def list_pictures(self) -> list[dict]:
+    def list_pictures(self) -> bytes:
         response.headers["Content-Type"] = "application/json"
 
         objs = [
@@ -48,7 +46,7 @@ class APIEndpoint():
         ]
         return json.dumps([obj for obj in sorted(objs, key=lambda obj: obj["dateTime"], reverse=True)]).encode("utf-8")
     
-    def take_picture(self) -> Picture:
+    def take_picture(self) -> bytes:
         picture_content = self.controller.take_picture(PictureFormat.PNG)
         response.headers["Content-Type"] = "application/json"
         picture_path = self.controller.save_picture(picture_content)
@@ -58,7 +56,7 @@ class APIEndpoint():
         )
         return json.dumps(picture).encode("utf-8")
     
-    def get_picture(self, id: PictureID) -> Picture:
+    def get_picture(self, id: PictureID) -> str:
         return f"Show picture info! (id={id})"
     
     def download_picture_content(self, id: PictureID):
@@ -74,7 +72,7 @@ class APIEndpoint():
             return (self.controller.data_folder_path / "pictures" / "thumbnails" / f"{id}.png").open("rb")
         else:
             file_path = self.controller.data_folder_path / "pictures" / f"{id}.png"
-            return self.controller.load_tumbnail(file_path)
+            return self.controller.generate_tumbnail(file_path)
     
     def delete_picture(self, id: PictureID):
         return f"Deleting picture! (id={id})"

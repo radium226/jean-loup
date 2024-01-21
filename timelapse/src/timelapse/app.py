@@ -32,35 +32,6 @@ def handle_event(context: Context, event_type: EventType):
 
 
 @app.command()
-@option(
-    "--format",
-    "picture_format",
-    required=False,
-    default=None,
-    type=Choice([picture_format for picture_format in PictureFormat]),
-    help="Picture format",
-)
-@argument(
-    "file_path", type=Path, required=False, default=None
-)
-@pass_context
-def take_picture(
-    context: Context, file_path: Path | None, picture_format: PictureFormat | None
-):  
-    with Controller.create() as controller:
-        if file_path and picture_format:
-            controller.take_picture(file_path, picture_format)
-        elif not file_path and not picture_format:
-            controller.take_picture()
-        elif file_path and not picture_format:
-            controller.take_picture(file_path)
-        elif picture_format and not file_path:
-            controller.take_picture(picture_format)
-        else:
-            raise Exception("Invalid arguments! ")
-
-
-@app.command()
 @pass_context
 def hotspot(context: Context):
     with HotSpot(IPv4Network("192.168.50.1/24", strict=False), "bamboo") as hotspot:

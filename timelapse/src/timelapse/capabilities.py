@@ -42,5 +42,5 @@ class CanSystem(Protocol):
     def stop_service(self, service_name: str) -> None:
         ...
 
-    def schedule_service(self, service_name: str, date_time: DateTime) -> None:
+    def schedule_service(self, service_name: str, date_time: DateTime | None) -> None:
         ...

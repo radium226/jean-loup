@@ -54,8 +54,16 @@ class FakeSystem(CanSystem):
         print(f"Stopping {service_name} service! ")
         self.services.remove(service_name)
 
-    def schedule_service(self, service_name: str, date_time: DateTime) -> None:
-        self.scheduled_services.append((service_name, date_time, ))
+    def schedule_service(self, service_name: str, date_time: DateTime | None) -> None:
+        if date_time is None:
+            print(f"Unscheduling {service_name} service! ")
+            self.scheduled_services = [
+                scheduled_service
+                for scheduled_service in self.scheduled_services
+                if scheduled_service[0] != service_name
+            ]
+        else:
+            self.scheduled_services.append((service_name, date_time, ))
 
 
 class FakeCamera(CanCamera):
