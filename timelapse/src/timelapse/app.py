@@ -87,3 +87,11 @@ def generate_picture_thumbnails(context: Context):
                 thumbail_file_path.parent.mkdir(parents=True, exist_ok=True)
                 with thumbail_file_path.open("wb") as f:
                     f.write(controller.generate_tumbnail(picture_file_path).read())
+
+
+@app.command()
+@pass_context
+def take_picture(context: Context):
+    with Controller.create() as controller:
+        picture_content = controller.take_picture()
+        controller.save_picture(picture_content)

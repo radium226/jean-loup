@@ -46,7 +46,7 @@ class APIEndpoint():
             )
             for picture_path in self.controller.list_pictures()
         ]
-        return json.dumps(objs).encode("utf-8")
+        return json.dumps([obj for obj in sorted(objs, key=lambda obj: obj["dateTime"], reverse=True)]).encode("utf-8")
     
     def take_picture(self) -> Picture:
         picture_content = self.controller.take_picture(PictureFormat.PNG)
@@ -63,10 +63,13 @@ class APIEndpoint():
     
     def download_picture_content(self, id: PictureID):
         response.headers["Content-Type"] = "image/png"
+        response.headers["Cache-Control"] = "max-age=31536000"
+
         return (self.controller.data_folder_path / "pictures" / f"{id}.png").open("rb")
     
     def download_picture_thumbnail(self, id: PictureID, extension: str | None = None):
         response.headers["Content-Type"] = "image/png"
+        response.headers["Cache-Control"] = "max-age=31536000"
         if (self.controller.data_folder_path / "pictures" / "thumbnails" / f"{id}.png").exists():
             return (self.controller.data_folder_path / "pictures" / "thumbnails" / f"{id}.png").open("rb")
         else:

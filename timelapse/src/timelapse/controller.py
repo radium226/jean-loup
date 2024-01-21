@@ -79,7 +79,7 @@ class Controller:
                 EventType.TIMER_TRIGGERED,
             ):
                 info("Timer triggered! ")
-                picture_file_path = self._generate_picture_file_path(
+                picture_file_path = self._generate_picture_content_file_path(
                     current_date_time, PictureFormat.PNG
                 )
                 self.take_picture(picture_file_path)
@@ -111,7 +111,7 @@ class Controller:
                 else:
                     info("Taking picture for timelapse and powering off... ")
                     # Taking picture
-                    picture_file_path = self._generate_picture_file_path(
+                    picture_file_path = self._generate_picture_content_file_path(
                         current_date_time, PictureFormat.PNG
                     )
                     self.take_picture(picture_file_path)
@@ -140,7 +140,7 @@ class Controller:
             ):
                 info("Custom button single tapped! ")
                 info("Taking picture... ")
-                picture_file_path = self._generate_picture_file_path(
+                picture_file_path = self._generate_picture_content_file_path(
                     current_date_time, PictureFormat.PNG
                 )
                 self.take_picture(picture_file_path)
@@ -233,16 +233,27 @@ class Controller:
 
     def schedule_wakeup(self, date_time: DateTime | None) -> None:
         self.pisugar.wakeup_time = date_time.time() if date_time else None
-        if date_time:
-            self.system.schedule_service("timelapse-handle-event@timer-triggered", date_time)
-        else:
-            # FIXME: We're fucked here!
-            pass
+        self.system.schedule_service("timelapse-handle-event@timer-triggered", date_time)
 
-    def _generate_picture_file_path(
+    def _generate_picture_content_file_path(
         self, current_date_time: DateTime, picture_format: PictureFormat
     ) -> Path:
         folder_path = self.data_folder_path / "pictures"
+        file_extension = FILE_EXTENSIONS_BY_PICTURE_FORMAT[picture_format]
+        file_path = folder_path / (
+            "{date_time}.{extension}".format(
+                date_time=current_date_time.format("YYYY-MM-DD_HH-mm-ss"),
+                extension=file_extension,
+            )
+        )
+        return file_path
+    
+    def _generate_picture_thumbnail_file_path(
+        self, 
+        current_date_time: DateTime,
+        picture_format: PictureFormat,
+    ) -> Path:
+        folder_path = self.data_folder_path / "pictures" / "thumbnails"
         file_extension = FILE_EXTENSIONS_BY_PICTURE_FORMAT[picture_format]
         file_path = folder_path / (
             "{date_time}.{extension}".format(
@@ -258,10 +269,16 @@ class Controller:
     def save_picture(self, content: BytesIO) -> Path:
         current_date_time = self.pisugar.now()
 
-        file_path = self._generate_picture_file_path(current_date_time, PictureFormat.PNG) # FIXME: We need to get rid of this PNG stuff
-        with file_path.open("wb") as f:
+        content_file_path = self._generate_picture_content_file_path(current_date_time, PictureFormat.PNG) # FIXME: We need to get rid of this PNG stuff
+        with content_file_path.open("wb") as f:
             f.write(content.read())
-        return file_path
+
+        thumbail_file_path = self._generate_picture_thumbnail_file_path(current_date_time, PictureFormat.PNG)
+        thumbail_file_path.parent.mkdir(parents=True, exist_ok=True)
+        with thumbail_file_path.open("wb") as f:
+            f.write(self.generate_tumbnail(content_file_path).read())
+
+        return content_file_path
     
     def list_pictures(self) -> list[Path]:
         return list((self.data_folder_path / "pictures").glob("*.png"))
