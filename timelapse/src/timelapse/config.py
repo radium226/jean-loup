@@ -92,7 +92,7 @@ class Config():
     DEFAULT_FOLDER_PATH = Path("/etc/timelapse")
 
     DEFAULT_OBJ = {
-        "hostspot": {
+        "hotspot": {
             "enabled": True,
             "ssid": "bamboo",
         }

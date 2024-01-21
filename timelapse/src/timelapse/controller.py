@@ -16,6 +16,7 @@ from .camera import Camera
 from .event_type import EventType
 from .state import State
 from .picture_format import PictureFormat
+from .config import Config
 
 
 PICTURE_FORMATS_BY_FILE_EXTENSION = {
@@ -37,11 +38,13 @@ class Controller:
     DEFAULT_DELAY_IN_MINUTES = 30
 
     def __init__(
-        self, pisugar: CanPiSugar, system: CanSystem, camera: CanCamera, data_folder_path: Path = DEFAULT_DATA_FOLDER_PATH,
+        self, pisugar: CanPiSugar, system: CanSystem, camera: CanCamera, config: Config, data_folder_path: Path = DEFAULT_DATA_FOLDER_PATH,
     ) -> None:
         self.pisugar = pisugar
         self.system = system
         self.camera = camera
+
+        self.config = config
 
         self.data_folder_path = data_folder_path
 
@@ -54,7 +57,7 @@ class Controller:
 
     @classmethod
     @contextmanager
-    def create(cls) -> Generator["Controller", None, None]:
+    def create(cls, config: Config) -> Generator["Controller", None, None]:
         with ExitStack() as exit_stack:
             pisugar = exit_stack.enter_context(PiSugar.create())
             system = exit_stack.enter_context(System.create())
@@ -64,6 +67,7 @@ class Controller:
                 pisugar=pisugar,
                 system=system,
                 camera=camera,
+                config=config,
             )
             info("Stopping Controller... ")
 
@@ -102,7 +106,8 @@ class Controller:
                 # If it has been powered off for a timelapse
                 if delay is None or delay.in_seconds() < 0 or delay.in_seconds() > 60:
                     info("Starting services... ")
-                    self.start_access_point()
+                    if self.config.values.hotspot.enabled:
+                        self.start_hotspot()
                     self.start_website()
                     if wakeup_time:
                         day_offset = 1 if current_time > wakeup_time else 0
@@ -153,7 +158,7 @@ class Controller:
                 info("Powering off... ")
                 self.power_off()
 
-    def start_access_point(self) -> None:
+    def start_hotspot(self) -> None:
         self.system.start_service("timelapse-hotspot")
 
     def start_website(self) -> None:

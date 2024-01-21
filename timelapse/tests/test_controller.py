@@ -8,8 +8,10 @@ from typing import Generator
 
 from timelapse.controller import Controller
 from timelapse.event_type import EventType
+from timelapse.config import Config
 
 from .fakes import FakePiSugar, FakeSystem, FakeCamera
+
 
 
 @fixture
@@ -38,7 +40,7 @@ def controller(
     camera: FakeCamera, pisugar: FakePiSugar, system: FakeSystem, data_folder_path: Path
 ) -> Controller:
     return Controller(
-        pisugar=pisugar, system=system, camera=camera, data_folder_path=data_folder_path
+        pisugar=pisugar, system=system, camera=camera, config=Config(), data_folder_path=data_folder_path
     )
 
 

@@ -9,6 +9,7 @@ from .event_type import EventType
 from .picture_format import PictureFormat
 from .hotspot import HotSpot
 from .website2 import Website
+from .config import Config
 
 
 
@@ -19,17 +20,19 @@ FILE_EXTENSIONS_BY_PICTURE_FORMAT = {
 
 
 @group(cls=DefaultGroup, default="handle-event", default_if_no_args=True)
+@option("--config-folder", "config_folder_path", type=Path, default=None)
 @pass_context
-def app(context: Context):
+def app(context: Context, config_folder_path: Path | None = None):
     context.obj = SimpleNamespace()
-    context.obj.config_folder_path = None
+    context.obj.config = Config(folder_path=config_folder_path)
 
 
 @app.command()
 @argument("event_type", type=Choice([event_type for event_type in EventType]))
 @pass_context
 def handle_event(context: Context, event_type: EventType):
-    with Controller.create() as controller:
+    config = context.obj.config
+    with Controller.create(config) as controller:
         controller.handle_event(event_type)
 
 
@@ -52,7 +55,8 @@ def website(context: Context, fake: bool, ui_folder_path: Path | None):
 @app.command()
 @pass_context
 def generate_picture_thumbnails(context: Context):
-    with Controller.create() as controller:
+    config = context.obj.config
+    with Controller.create(config) as controller:
         for picture_file_path in controller.list_pictures():
             print(f"Dealing with {picture_file_path}... ")
             thumbail_file_path = picture_file_path.parent / "thumbnails" / picture_file_path.name
@@ -65,7 +69,8 @@ def generate_picture_thumbnails(context: Context):
 @app.command()
 @pass_context
 def take_picture(context: Context):
-    with Controller.create() as controller:
+    config = context.obj.config
+    with Controller.create(config) as controller:
         picture_content = controller.take_picture()
         controller.save_picture(picture_content)
 
