@@ -81,4 +81,8 @@ def take_picture(context: Context):
 @argument("value_path", type=str)
 @pass_context
 def config(context: Context, bool_to_exit_code: bool, value_path: str):
-    raise NotImplementedError()
+    value = eval(f"context.obj.config.values.{value_path}")
+    if bool_to_exit_code:
+        exit(0 if value else 1)
+    else:
+        print(value)
