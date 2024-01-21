@@ -37,7 +37,7 @@ class Controller:
     DEFAULT_DELAY_IN_MINUTES = 30
 
     def __init__(
-        self, pisugar: CanPiSugar, system: CanSystem, camera: CanCamera, data_folder_path: Path = DEFAULT_DATA_FOLDER_PATH
+        self, pisugar: CanPiSugar, system: CanSystem, camera: CanCamera, data_folder_path: Path = DEFAULT_DATA_FOLDER_PATH,
     ) -> None:
         self.pisugar = pisugar
         self.system = system

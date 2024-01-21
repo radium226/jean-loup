@@ -11,6 +11,7 @@ from .hotspot import HotSpot
 from .website2 import Website
 
 
+
 FILE_EXTENSIONS_BY_PICTURE_FORMAT = {
     PictureFormat.JPEG: "jpg",
     PictureFormat.PNG: "png",
@@ -21,6 +22,7 @@ FILE_EXTENSIONS_BY_PICTURE_FORMAT = {
 @pass_context
 def app(context: Context):
     context.obj = SimpleNamespace()
+    context.obj.config_folder_path = None
 
 
 @app.command()
@@ -66,3 +68,12 @@ def take_picture(context: Context):
     with Controller.create() as controller:
         picture_content = controller.take_picture()
         controller.save_picture(picture_content)
+
+
+
+@app.command()
+@option("--is", "bool_to_exit_code", is_flag=True, default=False)
+@argument("value_path", type=str)
+@pass_context
+def config(context: Context, bool_to_exit_code: bool, value_path: str):
+    raise NotImplementedError()

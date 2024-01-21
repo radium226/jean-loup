@@ -7,7 +7,7 @@ export interface SettingsProps {
 }
 
 export default function Settings({ client }: SettingsProps) {
-
+    console.log(client)
     return (
         <div>
             <label className="relative inline-flex items-center me-5 cursor-pointer">
