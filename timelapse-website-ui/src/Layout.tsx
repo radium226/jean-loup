@@ -29,6 +29,11 @@ export default function Layout({ children }: LayoutProps) {
             linkTo: '/timelapse',
             text: 'Générer le timelapse',
         },
+        { 
+            emoji: '🎬',
+            linkTo: '/settings',
+            text: 'Configurer',
+        },
     ]
     return (
         <div>

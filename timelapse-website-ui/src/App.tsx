@@ -10,6 +10,7 @@ import { Client } from './client'
 import Camera from "./Camera"
 import Timelapse from './Timelapse'
 import Gallery from './Gallery'
+import Settings from "./Settings"
 
 
 
@@ -35,6 +36,10 @@ function App() {
         {
           path: "/gallery",
           element: <Gallery client={ client } />,
+        },
+        {
+          path: "/settings",
+          element: <Settings client={ client } />,
         }
       ]
     },
