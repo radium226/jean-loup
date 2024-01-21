@@ -48,8 +48,8 @@ def hotspot(context: Context):
 @option("--ui-folder", "ui_folder_path", type=Path, default=None)
 @pass_context
 def website(context: Context, fake: bool, ui_folder_path: Path | None):
-    with Website(ui_folder_path) as website:
-        website.wait_for()
+    with Website(ui_folder_path, config=context.obj.config) as website:
+        website.serve_forever()
 
 
 @app.command()
@@ -86,3 +86,11 @@ def config(context: Context, bool_to_exit_code: bool, value_path: str):
         exit(0 if value else 1)
     else:
         print(value)
+
+
+@app.command()
+@pass_context
+def power_off(context: Context):
+    config = context.obj.config
+    with Controller.create(config) as controller:
+        controller.power_off()

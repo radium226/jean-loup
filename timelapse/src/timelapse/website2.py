@@ -13,6 +13,7 @@ from mimetypes import guess_type
 
 from .controller import Controller
 from .picture_format import PictureFormat
+from .config import Config
 
 PictureID: TypeAlias = str
 
@@ -114,9 +115,10 @@ class Website():
     exit_stack: ExitStack
     ui_folder_path: Path
 
-    def __init__(self, ui_folder_path: Path | None):
+    def __init__(self, ui_folder_path: Path | None, config: Config):
         self.exit_stack = ExitStack()
         self.ui_folder_path = ui_folder_path or self.DEFAULT_UI_FOLDER_PATH
+        self.config = config
 
     def mount_api(self, controller: Controller):
         api_endpoint = APIEndpoint(controller)
@@ -146,7 +148,7 @@ class Website():
         })
 
     def __enter__(self):
-        controller = self.exit_stack.enter_context(Controller.create())
+        controller = self.exit_stack.enter_context(Controller.create(self.config))
 
         self.mount_api(controller)
         self.mount_ui()
@@ -159,5 +161,5 @@ class Website():
     def __exit__(self, type, value, trackeback):
         self.exit_stack.close()
 
-    def wait_for(self):
+    def serve_forever(self):
         engine.block()
