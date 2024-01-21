@@ -32,9 +32,11 @@ source=(
   "sysusers.conf"
   "pisugar-server.service"
   "pisugar-server-config.json"
+  "notify-when-ready"
 )
 
 sha256sums=(
+  "SKIP"
   "SKIP"
   "SKIP"
   "SKIP"
@@ -84,6 +86,8 @@ package() {
         -exec install -Dm0755 -t "$pkgdir/usr/bin/" {} +
     cd -
 
+    install -Dm0755 -t "$pkgdir/usr/lib/pisugar/server/bin" "$srcdir/notify-when-ready"
+
     install -Dm644 sysusers.conf "$pkgdir/usr/lib/sysusers.d/pisugar.conf"
     install -Dm644 tmpfiles.conf "$pkgdir/usr/lib/tmpfiles.d/pisugar.conf"
     install -Dm644 pisugar-server.service "$pkgdir/usr/lib/systemd/system/pisugar-server.service"
@@ -95,5 +99,5 @@ package() {
         -type "f" \
         -printf '%P\n' | \
     xargs -I {} \
-        install -Dm0644 -T "${srcdir}/pisugar-power-manager-rs/electron/dist/web/{}" "${pkgdir}/usr/lib/pisugar/server/{}"
+        install -Dm0644 -T "${srcdir}/pisugar-power-manager-rs/electron/dist/web/{}" "${pkgdir}/usr/lib/pisugar/server/web/{}"
 }

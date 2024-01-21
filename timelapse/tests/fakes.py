@@ -9,10 +9,11 @@ from timelapse.controller import FILE_EXTENSIONS_BY_PICTURE_FORMAT
 
 
 class FakePiSugar(CanPiSugar):
+
     def __init__(self):
         self.is_powered_on: bool = True
         self.override_now: DateTime | None = None
-        self._wakeup_time = None
+        self._wakeup_time: Time | None = None
 
     @property
     def wakeup_time(self) -> Time | None:
@@ -33,6 +34,7 @@ class FakePiSugar(CanPiSugar):
 
 class FakeSystem(CanSystem):
     def __init__(self):
+        self.scheduled_services: list[tuple[str, DateTime]] = []
         self.services: list[str] = []
         self.override_now: DateTime | None = None
         self.is_powered_on: bool = True
@@ -51,6 +53,9 @@ class FakeSystem(CanSystem):
     def stop_service(self, service_name: str) -> None:
         print(f"Stopping {service_name} service! ")
         self.services.remove(service_name)
+
+    def schedule_service(self, service_name: str, date_time: DateTime) -> None:
+        self.scheduled_services.append((service_name, date_time, ))
 
 
 class FakeCamera(CanCamera):

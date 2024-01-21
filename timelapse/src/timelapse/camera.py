@@ -2,6 +2,8 @@ from typing import Generator
 from contextlib import contextmanager
 from io import BytesIO
 from subprocess import run, PIPE
+from pathlib import Path
+from time import sleep
 
 from .logging import info
 
@@ -16,29 +18,34 @@ ENCODINGS_BY_PICTURE_FORMAT = {
 
 
 class Camera(CanCamera):
-    def __init__(self):
-        pass
+    def __init__(self, fake: bool = False):
+        self.fake = fake
 
     @classmethod
     @contextmanager
-    def create(cls) -> Generator["Camera", None, None]:
+    def create(cls, fake: bool = False) -> Generator["Camera", None, None]:
         info("Starting Camera service... ")
-        yield Camera()
+        yield Camera(fake)
         info("Stopping Camera service... ")
 
     def take_picture(
         self, picture_format: PictureFormat = PictureFormat.PNG
     ) -> BytesIO:
-        command = [
-            "rpicam-still",
-            "--nopreview",
-            "--immediate",
-            "--autofocus-on-capture",
-            "--encoding", ENCODINGS_BY_PICTURE_FORMAT[picture_format],
-            "--output", "-"
-        ]
-        process = run(command, stdout=PIPE)
-        if process.returncode != 0:
-            raise Exception("Unable to take picture! ")
-        
-        return BytesIO(process.stdout)
+        if self.fake:
+            with ( Path(__file__).parent / "fake.png" ).open("rb") as file:
+                sleep(1)
+                return BytesIO(file.read())
+        else:
+            command = [
+                "rpicam-still",
+                "--nopreview",
+                "--immediate",
+                "--autofocus-on-capture",
+                "--encoding", ENCODINGS_BY_PICTURE_FORMAT[picture_format],
+                "--output", "-"
+            ]
+            process = run(command, stdout=PIPE)
+            if process.returncode != 0:
+                raise Exception("Unable to take picture! ")
+            
+            return BytesIO(process.stdout)

@@ -1,6 +1,7 @@
 from pathlib import Path
-from pendulum import DateTime, Time
+from pendulum import DateTime
 from io import BytesIO
+from subprocess import run, PIPE
 
 from contextlib import contextmanager, ExitStack
 from typing import Generator, overload
@@ -32,6 +33,8 @@ class Controller:
     DEFAULT_DATA_FOLDER_PATH = Path("/var/lib/timelapse")
 
     DEFAULT_PICTURE_FORMAT = PictureFormat.PNG
+
+    DEFAULT_DELAY_IN_MINUTES = 30
 
     def __init__(
         self, pisugar: CanPiSugar, system: CanSystem, camera: CanCamera, data_folder_path: Path = DEFAULT_DATA_FOLDER_PATH
@@ -72,6 +75,23 @@ class Controller:
             event_type,
         ):
             case (
+                State(wakeup_time, current_date_time), 
+                EventType.TIMER_TRIGGERED,
+            ):
+                info("Timer triggered! ")
+                picture_file_path = self._generate_picture_content_file_path(
+                    current_date_time, PictureFormat.PNG
+                )
+                self.take_picture(picture_file_path)
+
+                # Setting next wakeup time
+                wakeup_time = wakeup_time or current_date_time.time()
+                wakeup_date_time = DateTime.combine(current_date_time.date(), wakeup_time)
+                next_wakeup_time = wakeup_date_time.add(minutes=self.DEFAULT_DELAY_IN_MINUTES)
+                self.schedule_wakeup(next_wakeup_time)
+                
+
+            case (
                 State(wakeup_time, current_date_time),
                 EventType.POWERED_ON,
             ):
@@ -84,18 +104,22 @@ class Controller:
                     info("Starting services... ")
                     self.start_access_point()
                     self.start_website()
+                    if wakeup_time:
+                        day_offset = 1 if current_time > wakeup_time else 0
+                        wakeup_date_time = DateTime.combine(current_date_time.date(), wakeup_time).add(days=day_offset)
+                        self.schedule_wakeup(wakeup_date_time)
                 else:
                     info("Taking picture for timelapse and powering off... ")
                     # Taking picture
-                    picture_file_path = self._generate_picture_file_path(
+                    picture_file_path = self._generate_picture_content_file_path(
                         current_date_time, PictureFormat.PNG
                     )
                     self.take_picture(picture_file_path)
 
                     # Setting next wakeup time
-                    next_wakeup_time = (wakeup_time or current_date_time.time()).add(
-                        minutes=2
-                    )
+                    wakeup_time = wakeup_time or current_date_time.time()
+                    wakeup_date_time = DateTime.combine(current_date_time.date(), wakeup_time)
+                    next_wakeup_time = wakeup_date_time.add(minutes=self.DEFAULT_DELAY_IN_MINUTES)
                     self.schedule_wakeup(next_wakeup_time)
 
                     # Powering off
@@ -107,8 +131,8 @@ class Controller:
             ):
                 info("Custom button long tapped! ")
                 info("Schedule wakeup time! ... ")
-                current_time = current_date_time.time()
-                self.schedule_wakeup(current_time.add(minutes=2))
+                first_wakeup_time = current_date_time.add(minutes=self.DEFAULT_DELAY_IN_MINUTES)
+                self.schedule_wakeup(first_wakeup_time)
 
             case (
                 State(_, current_date_time),
@@ -116,7 +140,7 @@ class Controller:
             ):
                 info("Custom button single tapped! ")
                 info("Taking picture... ")
-                picture_file_path = self._generate_picture_file_path(
+                picture_file_path = self._generate_picture_content_file_path(
                     current_date_time, PictureFormat.PNG
                 )
                 self.take_picture(picture_file_path)
@@ -207,10 +231,11 @@ class Controller:
         self.pisugar.power_off(delay=20)
         self.system.power_off(delay=5)
 
-    def schedule_wakeup(self, time: Time | None) -> None:
-        self.pisugar.wakeup_time = time
+    def schedule_wakeup(self, date_time: DateTime | None) -> None:
+        self.pisugar.wakeup_time = date_time.time() if date_time else None
+        self.system.schedule_service("timelapse-handle-event@timer-triggered", date_time)
 
-    def _generate_picture_file_path(
+    def _generate_picture_content_file_path(
         self, current_date_time: DateTime, picture_format: PictureFormat
     ) -> Path:
         folder_path = self.data_folder_path / "pictures"
@@ -222,6 +247,53 @@ class Controller:
             )
         )
         return file_path
+    
+    def _generate_picture_thumbnail_file_path(
+        self, 
+        current_date_time: DateTime,
+        picture_format: PictureFormat,
+    ) -> Path:
+        folder_path = self.data_folder_path / "pictures" / "thumbnails"
+        file_extension = FILE_EXTENSIONS_BY_PICTURE_FORMAT[picture_format]
+        file_path = folder_path / (
+            "{date_time}.{extension}".format(
+                date_time=current_date_time.format("YYYY-MM-DD_HH-mm-ss"),
+                extension=file_extension,
+            )
+        )
+        return file_path
 
     def now(self) -> DateTime:
         return self.pisugar.now()
+
+    def save_picture(self, content: BytesIO) -> Path:
+        current_date_time = self.pisugar.now()
+
+        content_file_path = self._generate_picture_content_file_path(current_date_time, PictureFormat.PNG) # FIXME: We need to get rid of this PNG stuff
+        with content_file_path.open("wb") as f:
+            f.write(content.read())
+
+        thumbail_file_path = self._generate_picture_thumbnail_file_path(current_date_time, PictureFormat.PNG)
+        thumbail_file_path.parent.mkdir(parents=True, exist_ok=True)
+        with thumbail_file_path.open("wb") as f:
+            f.write(self.generate_tumbnail(content_file_path).read())
+
+        return content_file_path
+    
+    def list_pictures(self) -> list[Path]:
+        return list((self.data_folder_path / "pictures").glob("*.png"))
+    
+    def generate_tumbnail(self, file_path: Path) -> BytesIO:
+        command = [
+            "ffmpeg",
+            "-hide_banner", "-loglevel", "error",
+            "-i", f"{file_path}",
+            "-vf",
+            "scale=320:-1",
+            "-frames:v", "1",
+            "-f", "image2", 
+            "-c", "png",
+            "-",
+        ]
+        
+        return BytesIO(run(command, stdout=PIPE, check=True).stdout)

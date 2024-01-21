@@ -5,6 +5,7 @@ pkgrel=1
 
 source=(
     "$pkgname-$pkgver.tar.gz"
+    "timelapse-website-ui.tar.gz"
     "tmpfiles.conf"
     "sysusers.conf"
     "timelapse.service"
@@ -16,6 +17,7 @@ source=(
 )
 
 sha256sums=(
+  "SKIP"
   "SKIP"
   "SKIP"
   "SKIP"
@@ -38,6 +40,10 @@ depends=(
     "python-click-default-group"
     "python-click"
     "python-pendulum"
+    "python-cherrypy"
+    "python-routes"
+    "python-retrying"
+    "ffmpeg"
 )
 
 build() {
@@ -57,4 +63,10 @@ package() {
 
     cd "$pkgname-$pkgver"
     python -m installer --destdir="$pkgdir" dist/*.whl
+
+    find "${srcdir}/timelapse-website-ui" \
+        -type "f" \
+        -printf '%P\n' | \
+    xargs -I {} \
+        install -Dm0644 -T "${srcdir}/timelapse-website-ui/{}" "${pkgdir}/usr/lib/timelapse/website/ui/{}"
 }

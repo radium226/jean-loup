@@ -14,3 +14,5 @@ class EventType(StrEnum):
     CUSTOM_BUTTON_DOUBLE_TAPPED = auto()
 
     POWER_BUTTON_TAPPED = auto()
+
+    TIMER_TRIGGERED = auto()

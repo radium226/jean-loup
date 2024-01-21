@@ -8,6 +8,7 @@ from .controller import Controller
 from .event_type import EventType
 from .picture_format import PictureFormat
 from .hotspot import HotSpot
+from .website2 import Website
 
 
 FILE_EXTENSIONS_BY_PICTURE_FORMAT = {
@@ -67,6 +68,30 @@ def hotspot(context: Context):
 
 
 @app.command()
+@option("--fake", is_flag=True, default=False)
+@option("--ui-folder", "ui_folder_path", type=Path, default=None)
 @pass_context
-def website(context: Context):
-    print("Starting website... ")
+def website(context: Context, fake: bool, ui_folder_path: Path | None):
+    with Website(ui_folder_path) as website:
+        website.wait_for()
+
+
+@app.command()
+@pass_context
+def generate_picture_thumbnails(context: Context):
+    with Controller.create() as controller:
+        for picture_file_path in controller.list_pictures():
+            print(f"Dealing with {picture_file_path}... ")
+            thumbail_file_path = picture_file_path.parent / "thumbnails" / picture_file_path.name
+            if not thumbail_file_path.exists():
+                thumbail_file_path.parent.mkdir(parents=True, exist_ok=True)
+                with thumbail_file_path.open("wb") as f:
+                    f.write(controller.generate_tumbnail(picture_file_path).read())
+
+
+@app.command()
+@pass_context
+def take_picture(context: Context):
+    with Controller.create() as controller:
+        picture_content = controller.take_picture()
+        controller.save_picture(picture_content)
