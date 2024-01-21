@@ -66,9 +66,9 @@ main()
             input="get firmware_version"
             
             declare output
-            if output=$( timeout "${timeout}" nc -q 0 -U "${socket_path}" <<<"${input}" ); then
-                if grep -Eq '^firmware_version: ' <<<"${output}"; then
-                    log "OK :)"
+            if output="$( timeout "${timeout}" nc -q 0 -U "${socket_path}" <<<"${input}" )"; then
+                if output="$( grep -Eq '^firmware_version: ' <<<"${output}" )"; then
+                    log "OK :) output=${output}"
                     systemd-notify --ready
                     break
                 fi
@@ -79,5 +79,13 @@ main()
     done
 
     log "Waiting for app... "
+    declare exit_code=
     wait ${app_pid}
+    exit_code=${!}
+
+    log "Exited with exit_code=${exit_code}"
+    exit ${exit_code}
+    
 }
+
+main "${@}"

@@ -55,6 +55,7 @@ shell()
 try_timelapse()
 {
     pdm build --project="./timelapse" --no-wheel --no-clean --dest "../packages/timelapse"
+    npm install --prefix "./timelapse-website-ui"
     npm run build --prefix "./timelapse-website-ui"
     tar --transform "s/^\./timelapse-website-ui/" -czf "./packages/timelapse/timelapse-website-ui.tar.gz" --directory "./timelapse-website-ui/dist/" "."
     cd "./packages/timelapse"
