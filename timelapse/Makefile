@@ -13,7 +13,7 @@ all: check lint test
 
 .PHONY: lint
 lint:
-	pdm run ruff --fix "./src" "./tests"
+	pdm run ruff "./src" "./tests"
 
 .PHONY: check
 check:

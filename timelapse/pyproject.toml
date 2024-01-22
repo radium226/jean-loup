@@ -41,6 +41,9 @@ build-backend = "pdm.backend"
 warn_return_any = true
 warn_unused_configs = true
 
+[tool.ruff]
+ignore-init-module-imports = true
+
 
 [[tool.mypy.overrides]]
 module = "click_default_group.*"

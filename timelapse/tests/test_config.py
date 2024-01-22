@@ -16,7 +16,7 @@ def config_file_path() -> Generator[Path, None, None]:
                     """\
                         {
                             "hotspot": {
-                                "enabled": true,
+                                "enabled": false,
                                 "ssid": "bamboo"
                             }
                         }
