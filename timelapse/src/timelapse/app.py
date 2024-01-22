@@ -8,7 +8,7 @@ from .controller import Controller
 from .event_type import EventType
 from .picture_format import PictureFormat
 from .hotspot import HotSpot
-from .website2 import Website
+from .website import Website
 from .config import Config
 
 
@@ -20,11 +20,11 @@ FILE_EXTENSIONS_BY_PICTURE_FORMAT = {
 
 
 @group(cls=DefaultGroup, default="handle-event", default_if_no_args=True)
-@option("--config-folder", "config_folder_path", type=Path, default=None)
+@option("--config-file", "config_file_path", type=Path, default=None)
 @pass_context
-def app(context: Context, config_folder_path: Path | None = None):
+def app(context: Context, config_file_path: Path | None = None):
     context.obj = SimpleNamespace()
-    context.obj.config = Config(folder_path=config_folder_path)
+    context.obj.config = Config.default().override_with(Config.from_file(config_file_path))
 
 
 @app.command()

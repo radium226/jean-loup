@@ -40,7 +40,7 @@ def controller(
     camera: FakeCamera, pisugar: FakePiSugar, system: FakeSystem, data_folder_path: Path
 ) -> Controller:
     return Controller(
-        pisugar=pisugar, system=system, camera=camera, config=Config(), data_folder_path=data_folder_path
+        pisugar=pisugar, system=system, camera=camera, config=Config.default(), data_folder_path=data_folder_path
     )
 
 
