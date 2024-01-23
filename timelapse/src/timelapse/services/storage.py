@@ -65,7 +65,7 @@ class _GenuineStorage(Storage):
             for picture_file_path in (self.folder_path / "pictures").glob("*.png"):
                 yield Picture(
                     date_time=pendulum.from_format(picture_file_path.stem, "YYYY-MM-DD_HH-mm-ss"),
-                    intent=PictureIntent.TIMELAPSE,
+                    intent=PictureIntent.TIME_LAPSE,
                     file_path=picture_file_path.relative_to(self.folder_path),
                 )
         
