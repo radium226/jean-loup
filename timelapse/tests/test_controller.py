@@ -130,12 +130,12 @@ def test_handle_other_events(
         (
             Time(23, 50, 0),
             DateTime(2024, 1, 15, 23, 50, 0),
-            DateTime(2024, 1, 16, 0, 20, 0),
+            DateTime(2024, 1, 16, 00, 50, 0),
         ),
         (
             Time(12, 50, 0),
-            DateTime(2024, 1, 15, 23, 50, 0),
-            DateTime(2024, 1, 15, 13, 20, 0),
+            DateTime(2024, 1, 15, 12, 50, 0),
+            DateTime(2024, 1, 15, 13, 50, 0),
         ),
     ],
 )

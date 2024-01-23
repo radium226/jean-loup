@@ -20,10 +20,14 @@ from timelapse.models import (
 
 class PiSugarMock(PiSugar):
 
+    is_powered_on: bool
+    override_now: DateTime | None
+    _wakeup_time: Time | None
+
     def __init__(self):
-        self.is_powered_on: bool = True
-        self.override_now: DateTime | None = None
-        self._wakeup_time: Time | None = None
+        self.is_powered_on = True
+        self.override_now = None
+        self._wakeup_time = None
 
     def __enter__(self):
         pass
@@ -49,11 +53,17 @@ class PiSugarMock(PiSugar):
 
 
 class SystemMock(System):
+
+    scheduled_services: list[tuple[str, DateTime]]
+    services: list[str]
+    override_now: DateTime | None
+    is_powered_on: bool
+
     def __init__(self):
-        self.scheduled_services: list[tuple[str, DateTime]] = []
-        self.services: list[str] = []
-        self.override_now: DateTime | None = None
-        self.is_powered_on: bool = True
+        self.scheduled_services = []
+        self.services = []
+        self.override_now = None
+        self.is_powered_on = True
 
     def __enter__(self):
         pass
@@ -89,8 +99,9 @@ class SystemMock(System):
 
 
 class CameraMock(Camera):
+    pictures_taken: list[tuple[DateTime, BytesIO]]
     def __init__(self):
-        self.pictures_taken: list[tuple[DateTime, BytesIO]] = []
+        self.pictures_taken = []
 
     def __enter__(self):
         pass
