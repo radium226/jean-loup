@@ -8,6 +8,7 @@ from .values import (
     TimeLapse,
     Hotspot,
     Website,
+    PiSugar,
 )
 
 
@@ -16,10 +17,12 @@ class Config:
     DEFAULT_FILE_PATH = Path("/etc/timelapse/config.json")
 
     DEFAULT_VALUES = ConfigValues(
-        data_folder_path=Path("/var/lib/timelapse"),
+        storage_folder_path=Path("/var/lib/timelapse"),
         time_lapse=TimeLapse(
             enabled=True,
-            wakeup_time=Time(12, 0, 0)
+            wakeup_time=Time(12, 0, 0),
+            delay_in_minutes=60,
+            threshold_in_seconds=60,
         ),
         hotspot=Hotspot(
             enabled=True,
@@ -29,6 +32,9 @@ class Config:
             enabled=True,
             ui_folder_path=Path("/var/lib/timelapse/website"),
         ),
+        pi_sugar=PiSugar(
+            server_socket_path=Path("/run/pisugar/server.sock"),
+        )
     )
 
     file_path: Path | None

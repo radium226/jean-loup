@@ -12,7 +12,9 @@ import pendulum
 from mimetypes import guess_type
 
 from .controller import Controller
-from .picture_format import PictureFormat
+from .models import (
+    PictureIntent
+)
 from .config import Config
 
 PictureID: TypeAlias = str
@@ -40,22 +42,17 @@ class APIEndpoint():
 
         objs = [
             dict(
-                id=picture_path.stem,
-                dateTime=pendulum.from_format(picture_path.stem, "YYYY-MM-DD_HH-mm-ss").to_iso8601_string(),
+                id=picture.file_path.stem,
+                dateTime=pendulum.from_format(picture.file_path.stem, "YYYY-MM-DD_HH-mm-ss").to_iso8601_string(),
             )
-            for picture_path in self.controller.list_pictures()
+            for picture in self.controller.list_pictures()
         ]
         return json.dumps([obj for obj in sorted(objs, key=lambda obj: obj["dateTime"], reverse=True)]).encode("utf-8")
     
     def take_picture(self) -> bytes:
-        picture_content = self.controller.take_picture(PictureFormat.PNG)
+        picture, content, _ = self.controller.take_picture(PictureIntent.AD_HOC)
         response.headers["Content-Type"] = "application/json"
-        picture_path = self.controller.save_picture(picture_content)
-        picture = dict(
-            id=picture_path.stem,
-            date_time=pendulum.from_format(picture_path.stem, "YYYY-MM-DD_HH-mm-ss").to_iso8601_string(),
-        )
-        return json.dumps(picture).encode("utf-8")
+        return json.dumps(content).encode("utf-8")
     
     def get_picture(self, id: PictureID) -> str:
         return f"Show picture info! (id={id})"
@@ -64,16 +61,13 @@ class APIEndpoint():
         response.headers["Content-Type"] = "image/png"
         response.headers["Cache-Control"] = "max-age=31536000"
 
-        return (self.controller.data_folder_path / "pictures" / f"{id}.png").open("rb")
+        return self.controller.load_picture_content(id)
     
     def download_picture_thumbnail(self, id: PictureID, extension: str | None = None):
         response.headers["Content-Type"] = "image/png"
         response.headers["Cache-Control"] = "max-age=31536000"
-        if (self.controller.data_folder_path / "pictures" / "thumbnails" / f"{id}.png").exists():
-            return (self.controller.data_folder_path / "pictures" / "thumbnails" / f"{id}.png").open("rb")
-        else:
-            file_path = self.controller.data_folder_path / "pictures" / f"{id}.png"
-            return self.controller.generate_tumbnail(file_path)
+
+        return self.controller.load_picture_thumbnail(id)
     
     def delete_picture(self, id: PictureID):
         return f"Deleting picture! (id={id})"

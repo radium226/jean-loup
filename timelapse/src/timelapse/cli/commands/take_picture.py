@@ -4,12 +4,12 @@ from click import (
     pass_context,
 )
 
-from ...service import Service
+from ...controller import Controller
 
 
 @command
 @pass_context
 def take_picture(context: Context):
     config = context.obj.config
-    with Service(config) as service:
-        service.take_picture()
+    with Controller(config) as controller:
+        controller.power_off()

@@ -1,46 +1,51 @@
 from pytest import fixture
 from pytest import mark
-from tempfile import TemporaryDirectory
-from pathlib import Path
 import pendulum
 from pendulum import Time, DateTime
-from typing import Generator
 
 from timelapse.controller import Controller
-from timelapse.event_type import EventType
+from timelapse.models import EventType
 from timelapse.config import Config
 
-from .fakes import FakePiSugar, FakeSystem, FakeCamera
+from .mocks import (
+    PiSugarMock, 
+    SystemMock, 
+    CameraMock,
+    StorageMock,
+)
 
+@fixture
+def config() -> Config:
+    return Config.default()
 
 
 @fixture
-def camera() -> FakeCamera:
-    return FakeCamera()
+def pi_sugar() -> PiSugarMock:
+    return PiSugarMock()
 
 
 @fixture
-def pisugar() -> FakePiSugar:
-    return FakePiSugar()
+def system() -> SystemMock:
+    return SystemMock()
 
 
 @fixture
-def system() -> FakeSystem:
-    return FakeSystem()
+def camera() -> CameraMock:
+    return CameraMock()
+
+@fixture
+def storage() -> StorageMock:
+    return StorageMock()
 
 
 @fixture
-def data_folder_path() -> Generator[Path, None, None]:
-    with TemporaryDirectory() as temp_folder_path:
-        yield Path(temp_folder_path)
-
-
-@fixture
-def controller(
-    camera: FakeCamera, pisugar: FakePiSugar, system: FakeSystem, data_folder_path: Path
-) -> Controller:
+def controller(config: Config, pi_sugar: PiSugarMock, system: SystemMock, camera: CameraMock, storage: StorageMock) -> Controller:
     return Controller(
-        pisugar=pisugar, system=system, camera=camera, config=Config.default(), data_folder_path=data_folder_path
+        config,
+        pi_sugar=pi_sugar, 
+        system=system, 
+        camera=camera,
+        storage=storage,
     )
 
 
@@ -73,11 +78,11 @@ def test_handle_powered_on_event(
     number_of_pictures_taken: int,
     number_of_scheduled_services: int,
     controller: Controller,
-    pisugar: FakePiSugar,
-    system: FakeSystem,
-    camera: FakeCamera,
+    pi_sugar: PiSugarMock,
+    system: SystemMock,
+    camera: CameraMock,
 ):
-    pisugar.wakeup_time = wakeup_time
+    pi_sugar.wakeup_time = wakeup_time
     controller.handle_event(EventType.POWERED_ON)
     assert len(system.services) == number_of_services
     assert len(system.scheduled_services) == number_of_scheduled_services
@@ -85,12 +90,12 @@ def test_handle_powered_on_event(
 
 
 def test_handle_powered_on_event_without_wakeup_time(
-    controller: Controller, pisugar: FakePiSugar, system: FakeSystem, camera: FakeCamera
+    controller: Controller, pi_sugar: PiSugarMock, system: SystemMock, camera: CameraMock
 ):
     controller.handle_event(EventType.POWERED_ON)
     assert len(system.services) == 2
     assert len(camera.pictures_taken) == 0
-    assert pisugar.wakeup_time is None
+    assert pi_sugar.wakeup_time is None
 
 
 @mark.parametrize(
@@ -100,21 +105,21 @@ def test_handle_powered_on_event_without_wakeup_time(
 def test_handle_other_events(
     event_type: EventType,
     controller: Controller,
-    pisugar: FakePiSugar,
-    system: FakeSystem,
-    camera: FakeCamera,
+    pi_sugar: PiSugarMock,
+    system: SystemMock,
+    camera: CameraMock,
 ) -> None:
     controller.handle_event(event_type)
     match event_type:
         case EventType.POWER_BUTTON_TAPPED:
-            assert not pisugar.is_powered_on
+            assert not pi_sugar.is_powered_on
             assert not system.is_powered_on
 
         case EventType.CUSTOM_BUTTON_SINGLE_TAPPED:
             assert len(camera.pictures_taken) == 1
 
         case EventType.CUSTOM_BUTTON_LONG_TAPPED:
-            assert pisugar.wakeup_time is not None
+            assert pi_sugar.wakeup_time is not None
 
         case EventType.CUSTOM_BUTTON_DOUBLE_TAPPED:
             pass
@@ -136,10 +141,10 @@ def test_handle_other_events(
 )
 def test_handle_timer_triggered_event(
     wakeup_time: Time, current_date_time: DateTime, next_wakeup_date_time: DateTime,
-    controller: Controller, pisugar: FakePiSugar, system: FakeSystem, camera: FakeCamera
+    controller: Controller, pi_sugar: PiSugarMock, system: SystemMock, camera: CameraMock
 ) -> None:
-    pisugar.wakeup_time = wakeup_time
-    pisugar.override_now = current_date_time
+    pi_sugar.wakeup_time = wakeup_time
+    pi_sugar.override_now = current_date_time
     controller.handle_event(EventType.TIMER_TRIGGERED)
     assert system.scheduled_services[0][1] == next_wakeup_date_time
-    assert pisugar.wakeup_time == next_wakeup_date_time.time()
+    assert pi_sugar.wakeup_time == next_wakeup_date_time.time()

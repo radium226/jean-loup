@@ -1,5 +1,5 @@
 __all__ = [
-    "app"
+    "CLI"
 ]
 
-from .app import app
+from .cli import CLI
