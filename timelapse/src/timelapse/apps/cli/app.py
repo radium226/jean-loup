@@ -2,20 +2,19 @@ from pathlib import Path
 from types import SimpleNamespace
 from click import Context, pass_context, option, group
 
-from ..config import Config
+from ...config import Config
 from .commands import (
     power_off,
     handle_event,
-    hotspot,
-    website,
     take_picture,
 )
 
 
 @group
 @option("--config-file", "config_file_path", type=Path, default=None)
+@option("--dry-run", is_flag=True, default=False, required=False)
 @pass_context
-def CLI(context: Context, config_file_path: Path | None = None):
+def app(context: Context, dry_run: bool = False, config_file_path: Path | None = None):
     context.obj = SimpleNamespace()
     context.obj.config = (
         Config.default()
@@ -28,10 +27,9 @@ def CLI(context: Context, config_file_path: Path | None = None):
                 })
             )
     )
+    context.obj.dry_run = dry_run
 
 
-CLI.add_command(power_off)
-CLI.add_command(handle_event)
-CLI.add_command(hotspot)
-CLI.add_command(website)
-CLI.add_command(take_picture)
+app.add_command(power_off)
+app.add_command(handle_event)
+app.add_command(take_picture)

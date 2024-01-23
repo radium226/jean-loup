@@ -7,9 +7,9 @@ from pathlib import Path
 from textwrap import dedent
 from retrying import retry
 
-from .logging import info
+from ...logging import info
 
-class HotSpot:
+class Hotspot:
 
     def __init__(self, ip_network: IPv4Network, domain: str, wireless_hardware_device: str = "phy0", ssid="Jean Loup"):
         self.wireless_hardware_device = wireless_hardware_device

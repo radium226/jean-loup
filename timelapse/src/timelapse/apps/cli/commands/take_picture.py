@@ -4,12 +4,13 @@ from click import (
     pass_context,
 )
 
-from ...controller import Controller
+from ....controller import Controller
 
 
 @command
 @pass_context
 def take_picture(context: Context):
     config = context.obj.config
-    with Controller(config) as controller:
+    dry_run = context.obj.dry_run
+    with Controller(config, dry_run=dry_run) as controller:
         controller.power_off()

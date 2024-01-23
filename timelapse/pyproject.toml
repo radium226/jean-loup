@@ -23,7 +23,9 @@ readme = "README.md"
 text = "MIT"
 
 [project.scripts]
-timelapse = "timelapse:app"
+timelapse = "timelapse.apps.cli:app"
+timelapse-hotspot = "timelapse.apps.hotspot:app"
+timelapse-website = "timelapse.apps.website:app"
 
 [project.optional-dependencies]
 dev = [

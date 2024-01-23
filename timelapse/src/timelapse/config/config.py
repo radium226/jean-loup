@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 from deepmerge import always_merger
 from pendulum import Time
+from ipaddress import IPv4Address
 
 from .values import (
     ConfigValues,
@@ -17,7 +18,7 @@ class Config:
     DEFAULT_FILE_PATH = Path("/etc/timelapse/config.json")
 
     DEFAULT_VALUES = ConfigValues(
-        storage_folder_path=Path("/var/lib/timelapse"),
+        storage_folder_path=Path("/var/lib/timelapse/storage"),
         time_lapse=TimeLapse(
             enabled=True,
             wakeup_time=Time(12, 0, 0),
@@ -31,6 +32,8 @@ class Config:
         website=Website(
             enabled=True,
             ui_folder_path=Path("/var/lib/timelapse/website"),
+            host=IPv4Address("0.0.0.0"),
+            port=8080,
         ),
         pi_sugar=PiSugar(
             server_socket_path=Path("/run/pisugar/server.sock"),
@@ -54,12 +57,15 @@ class Config:
 
     @classmethod
     def from_file(cls, file_path: Path | None) -> "Config":
-        with ( file_path or cls.DEFAULT_FILE_PATH ).open("r") as f:
-            obj = json.load(f)
-            if isinstance(obj, dict):
-                return cls(obj, file_path=file_path)
-            else:
-                raise Exception("Config file is invalid! ")
+        if ( file_path or cls.DEFAULT_FILE_PATH ).exists():
+            with ( file_path or cls.DEFAULT_FILE_PATH ).open("r") as f:
+                obj = json.load(f)
+                if isinstance(obj, dict):
+                    return cls(obj, file_path=file_path)
+                else:
+                    raise Exception("Config file is invalid! ")
+        else:
+            return Config({})
 
     def override_with(self, other: "Config") -> "Config":
         return Config(
