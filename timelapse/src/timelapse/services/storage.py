@@ -62,23 +62,25 @@ class _GenuineStorage(Storage):
 
     def list_pictures(self) -> list[Picture]:
         def iter_pictures():
-            for picture_file_path in (self.folder_path / "pictures").glob("*.png"):
+            for picture_file_path in (self.folder_path / "pictures").glob("**/*.png"):
+                id = picture_file_path.stem,
+                intent = PictureIntent(picture_file_path.parent.name)
                 yield Picture(
+                    id=id,
                     date_time=pendulum.from_format(picture_file_path.stem, "YYYY-MM-DD_HH-mm-ss"),
-                    intent=PictureIntent.TIME_LAPSE,
-                    file_path=picture_file_path.relative_to(self.folder_path),
+                    intent=intent,
                 )
         
         return list(iter_pictures())
     
     def save_picture(self, date_time: DateTime, intent: PictureIntent, content: BytesIO) -> Picture:
-        file_path = self.folder_path / "pictures" / f"{date_time.format('YYYY-MM-DD_HH-mm-ss')}.png"
+        file_path = self.folder_path / "pictures" / f"{intent}" / f"{date_time.format('YYYY-MM-DD_HH-mm-ss')}.png"
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_bytes(content.read())
         return Picture(
+            id=date_time.format("YYYY-MM-DD_HH-mm-ss"),
             date_time=date_time,
             intent=intent,
-            file_path=file_path.relative_to(self.folder_path),
         )
     
     def load_picture_content(self, picture_or_picture_id: Picture | PictureID) -> BytesIO:
@@ -113,9 +115,9 @@ class _FakeStorage(Storage):
 
     def save_picture(self, date_time: DateTime, intent: PictureIntent, content: BytesIO) -> Picture:
         return Picture(
+            id=date_time.format("YYYY-MM-DD_HH-mm-ss"),
             date_time=date_time,
             intent=intent,
-            file_path=Path("fake.png"),
         )
     
     def load_picture_content(self, picture_or_picture_id: Picture | PictureID) -> BytesIO:

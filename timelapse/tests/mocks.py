@@ -142,9 +142,9 @@ class StorageMock(Storage):
     
     def save_picture(self, date_time: DateTime, intent: PictureIntent, content: BytesIO) -> Picture:
         return Picture(
+            id=date_time.format("YYYY-MM-DD_HH-mm-ss"),
             date_time=date_time,
             intent=intent,
-            file_path=Path(""),
         )
     
     def load_picture_content(self, picture_or_picture_id: Picture | PictureID) -> BytesIO:
