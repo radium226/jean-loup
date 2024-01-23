@@ -59,13 +59,14 @@ class Website():
         self.mount_api()
         self.mount_ui()
         
-        server.socket_host = self.config.values.website.host
+        server.socket_host = str(self.config.values.website.host)
         server.socket_port = self.config.values.website.port
         engine.start()
         return self
     
 
     def __exit__(self, type, value, trackeback):
+        engine.exit()
         self.exit_stack.close()
 
     def serve_forever(self):

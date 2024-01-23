@@ -1,3 +1,4 @@
+from typing import overload, Union
 from pathlib import Path
 import json
 from deepmerge import always_merger
@@ -67,13 +68,37 @@ class Config:
         else:
             return Config({})
 
+    @overload
     def override_with(self, other: "Config") -> "Config":
+        ...
+
+    @overload
+    def override_with(self, other: dict) -> "Config":
+        ...
+
+    @overload
+    def override_with(self, other: Path) -> "Config":
+        ...   
+
+    def override_with(self, other: Union["Config", dict, Path]) -> "Config":
+        if isinstance(other, Config):
+            other_obj = other.obj
+            other_file_path = None
+
+        elif isinstance(other, dict):
+            other_obj = other
+            other_file_path = None
+
+        elif isinstance(other, Path):
+            other_obj = json.loads(other.read_text())
+            other_file_path = other
+
         return Config(
             always_merger.merge(
                 self.obj, 
-                other.obj,
+                other_obj,
             ), 
-            file_path=self.file_path or other.file_path,
+            file_path=self.file_path or other_file_path
         )
 
     @property

@@ -1,7 +1,6 @@
 from pydantic import BaseModel
-from pathlib import Path
 
-from ..types_for_pydantic import DateTime
+from ..types_for_pydantic import DateTime, Path
 
 from .picture_intent import PictureIntent
 

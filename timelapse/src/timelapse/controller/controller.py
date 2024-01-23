@@ -43,7 +43,7 @@ class Controller:
         storage: Storage | None = None,
     ):
         self.config = config
-        info("config={config}", config=config)
+        info("config.values={config_values}", config_values=config.values)
         self.camera = camera or ( Camera.fake() if dry_run else Camera.genuine() )
         self.system = system or ( System.fake() if dry_run else System.genuine() )
         
