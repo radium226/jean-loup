@@ -1,17 +1,14 @@
-from pytest import fixture
 from pytest import mark
 import pendulum
 from pendulum import Time, DateTime
 
 from timelapse.controller import Controller
 from timelapse.models import EventType
-from timelapse.config import Config
 
 from .mocks import (
     PiSugarMock, 
     SystemMock, 
     CameraMock,
-    StorageMock,
 )
 
 
