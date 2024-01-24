@@ -187,7 +187,7 @@ serve_website()
 
     trap "kill ${npm_pid} ; kill ${pdm_pid}" SIGINT
 
-    tail -f "/dev/null"
+    tail -f "/dev/null" # Block purposely to wait for SIGINT
 
     declare pid
     for pid in "${npm_pid}" "${pdm_pid}"; do
