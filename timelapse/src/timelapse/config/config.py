@@ -1,7 +1,7 @@
 from typing import overload, Union
 from pathlib import Path
 import json
-from deepmerge import always_merger
+from deepmerge import Merger
 from pendulum import Time
 from ipaddress import IPv4Address
 
@@ -93,8 +93,21 @@ class Config:
             other_obj = json.loads(other.read_text())
             other_file_path = other
 
+        merger = Merger(
+            [
+                (list, ["append"]),
+                (dict, ["merge"]),
+                (set, ["union"])
+            ],
+            # next, choose the fallback strategies,
+            # applied to all other types:
+            ["override"],
+            # finally, choose the strategies in
+            # the case where the types conflict:
+            ["override"]
+        )
         return Config(
-            always_merger.merge(
+            merger.merge(
                 self.obj, 
                 other_obj,
             ), 

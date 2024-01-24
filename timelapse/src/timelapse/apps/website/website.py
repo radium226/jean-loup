@@ -15,6 +15,8 @@ from .endpoints import (
     UI,
 )
 
+from .endpoint_type import EndpointType
+
 
 class Website():
 
@@ -22,10 +24,11 @@ class Website():
     config: Config
     controller: Controller
 
-    def __init__(self, config: Config, /, dry_run: bool = False, controller: Controller | None = None):
+    def __init__(self, config: Config, /, dry_run: bool = False, controller: Controller | None = None, endpoint_types: list[EndpointType] | None = None):
         self.exit_stack = ExitStack()
         self.config = config
         self.controller = controller or Controller(config, dry_run=dry_run)
+        self.endpoint_types = endpoint_types or [endpoint_type for endpoint_type in EndpointType]
 
     def mount_api(self):
         endpoint = API(self.controller)
@@ -56,8 +59,11 @@ class Website():
     def __enter__(self):
         self.exit_stack.enter_context(self.controller)
 
-        self.mount_api()
-        self.mount_ui()
+        if EndpointType.API in self.endpoint_types:
+            self.mount_api()
+        
+        if EndpointType.UI in self.endpoint_types:
+            self.mount_ui()
         
         server.socket_host = str(self.config.values.website.host)
         server.socket_port = self.config.values.website.port

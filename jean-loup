@@ -43,6 +43,10 @@ main()
                 try_timelapse
             ;;
 
+        "w" | "serve-website" )
+                serve_website "${@}"
+            ;;
+
     esac
 }
 
@@ -161,6 +165,34 @@ EOF
         cd "/tmp/packages/pisugar-git"
         sudo -u "makepkg" makepkg --syncdeps --noconfirm --install --cleanbuild --clean --force
     fi
+}
+
+serve_website()
+{   
+    # Start fake API
+    declare pdm_pid
+    pdm run \
+        --project="./timelapse" \
+            timelapse-website \
+                --exclude-endpoint "ui" \
+                --dry-run \
+                --host "127.0.0.1" \
+                --port "9876" &
+    pdm_pid=${!}
+
+    # Start dev UI
+    declare npm_pid
+    npm run dev --prefix="./timelapse-website-ui" &
+    npm_pid=${!}
+
+    trap "kill ${npm_pid} ; kill ${pdm_pid}" SIGINT
+
+    tail -f "/dev/null"
+
+    declare pid
+    for pid in "${npm_pid}" "${pdm_pid}"; do
+        wait "${pid}"
+    done
 }
 
 main "${@}"
