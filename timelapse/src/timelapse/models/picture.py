@@ -12,5 +12,3 @@ class Picture(BaseModel):
     date_time: DateTime
 
     intent: PictureIntent
-
-    content: bytes | None = None

@@ -1,8 +1,5 @@
 from contextlib import ExitStack
 from pendulum import DateTime, Time
-from pathlib import Path
-from subprocess import run, PIPE
-from io import BytesIO
 
 from ..config import Config
 from ..services import (
@@ -158,10 +155,10 @@ class Controller:
         )
         return picture
     
-    def load_picture_content(self, picture_id: PictureID) -> BytesIO:
+    def load_picture_content(self, picture_id: PictureID) -> bytes | None:
         return self.storage.load_picture_content(picture_id)
     
-    def load_picture_thumbnail(self, picture_id: PictureID) -> BytesIO:
+    def load_picture_thumbnail(self, picture_id: PictureID) -> bytes | None:
         return self.storage.load_picture_thumbnail(picture_id)
 
     def power_off(self) -> None:
@@ -173,18 +170,3 @@ class Controller:
     
     def list_pictures(self) -> list[Picture]:
         return self.storage.list_pictures()
-    
-    def generate_tumbnail(self, file_path: Path) -> BytesIO:
-        command = [
-            "ffmpeg",
-            "-hide_banner", "-loglevel", "error",
-            "-i", f"{file_path}",
-            "-vf",
-            "scale=320:-1",
-            "-frames:v", "1",
-            "-f", "image2", 
-            "-c", "png",
-            "-",
-        ]
-        
-        return BytesIO(run(command, stdout=PIPE, check=True).stdout)

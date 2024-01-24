@@ -6,6 +6,6 @@ export interface PictureProps {
 
 export default function Picture({ source  }: PictureProps) {
     return (
-        source !== null ? <img className="object-contain h-96 w-144" src={source} /> : <div className="text-6xl"><div className="object-contain">🪴</div></div>
+        source !== null ? <img className="object-contain min-h-full w-auto rounded" src={source} /> : <div className="text-6xl"><div className="object-contain">🪴</div></div>
     )
 }

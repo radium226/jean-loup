@@ -1,16 +1,4 @@
-
-export interface Picture {
-    id: string;
-    dateTime: Date;
-}
-
-
-function parsePicture(json: any): Picture {
-    return {
-        id: json.id,
-        dateTime: new Date(json.dateTime),
-    }
-}
+import { Picture, parsePicture } from "./models"
 
 
 export class Client {
@@ -27,6 +15,7 @@ export class Client {
         })
         const json = await response.json()
         const picture = parsePicture(json)
+        console.log(picture)
         return picture
     }
 
@@ -57,7 +46,7 @@ export class Client {
             method: "GET",
         })
         const jsons: any[] = await response.json();
-        return jsons.map(parsePicture)
+        return jsons.map((json) => parsePicture(json))
     }
     
 }

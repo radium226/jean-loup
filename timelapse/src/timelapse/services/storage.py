@@ -1,8 +1,7 @@
-from typing import Protocol, overload
+from typing import Protocol
 from pathlib import Path
 import pendulum
 from pendulum import DateTime
-from io import BytesIO
 from subprocess import run, PIPE
 
 
@@ -24,18 +23,13 @@ class Storage(Protocol):
     def list_pictures(self) -> list[Picture]:
         ...
 
-    def save_picture(self, date_time: DateTime, intent: PictureIntent, content: BytesIO) -> Picture:
+    def save_picture(self, date_time: DateTime, intent: PictureIntent, content: bytes) -> Picture:
         ...
 
-    @overload
-    def load_picture_content(self, __picture: Picture) -> BytesIO:
+    def load_picture_content(self, id: PictureID) -> bytes | None:
         ...
 
-    @overload
-    def load_picture_content(self, __picture_id: PictureID) -> BytesIO:
-        ...
-
-    def load_picture_thumbnail(self, picture_or_picture_id: Picture | PictureID) -> BytesIO:
+    def load_picture_thumbnail(self, id: PictureID) -> bytes | None:
         ...
     
     @classmethod
@@ -73,36 +67,59 @@ class _GenuineStorage(Storage):
         
         return list(iter_pictures())
     
-    def save_picture(self, date_time: DateTime, intent: PictureIntent, content: BytesIO) -> Picture:
-        file_path = self.folder_path / "pictures" / f"{intent}" / f"{date_time.format('YYYY-MM-DD_HH-mm-ss')}.png"
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_bytes(content.read())
+    def save_picture(self, date_time: DateTime, intent: PictureIntent, content: bytes) -> Picture:
+        id = date_time.format("YYYY-MM-DD_HH-mm-ss")
+
+        content_file_path = self.folder_path / "pictures" / f"{intent}" / f"{id}.png"
+        content_file_path.parent.mkdir(parents=True, exist_ok=True)
+        content_file_path.write_bytes(content)
+        
+        thumbnail = self.generate_tumbnail(content)
+        thumbnail_file_path = self.folder_path / ".thumbnails" / f"{id}.png"
+        thumbnail_file_path.parent.mkdir(parents=True, exist_ok=True)
+        thumbnail_file_path.write_bytes(thumbnail)
+        
         return Picture(
-            id=date_time.format("YYYY-MM-DD_HH-mm-ss"),
+            id=id,
             date_time=date_time,
             intent=intent,
         )
     
-    def load_picture_content(self, picture_or_picture_id: Picture | PictureID) -> BytesIO:
-        raise Exception("Not implemented! ")
+    def lookup_picture(self, id: PictureID) -> Picture | None:
+        pictures = self.list_pictures()
+        for picture in pictures:
+            if picture.id == id:
+                return picture
+        
+        return None
     
-    def load_picture_thumbnail(self, picture_or_picture_id: Picture | PictureID) -> BytesIO:
-        raise Exception("Not implemented! ")
+    def load_picture_content(self, id: PictureID) -> bytes | None:
+        if picture := self.lookup_picture(id):
+            return (self.folder_path / "pictures" / f"{picture.intent}" / f"{picture.id}.png").read_bytes()
+        
+        return None
+    
+    def load_picture_thumbnail(self, id: PictureID) -> bytes | None:
+        if picture := self.lookup_picture(id):
+            return (self.folder_path / ".thumbnails" / f"{picture.id}.png").read_bytes()
+        
+        return None
 
-    def generate_tumbnail(self, file_path: Path) -> BytesIO:
+    def generate_tumbnail(self, content: bytes) -> bytes:
         command = [
             "ffmpeg",
-            "-hide_banner", "-loglevel", "error",
-            "-i", f"{file_path}",
-            "-vf",
-            "scale=320:-1",
-            "-frames:v", "1",
-            "-f", "image2", 
-            "-c", "png",
-            "-",
+                "-hide_banner", "-loglevel", "error",
+                "-i", "-",
+                "-vf",
+                "scale=320:-1",
+                "-frames:v", "1",
+                "-f", "image2", 
+                "-c", "png",
+                "-",
         ]
         
-        return BytesIO(run(command, stdout=PIPE, check=True).stdout)
+        thubnail = run(command, stdout=PIPE, input=content, check=True).stdout
+        return thubnail
     
 
 class _FakeStorage(Storage):
@@ -113,18 +130,25 @@ class _FakeStorage(Storage):
     def __exit__(self, type, value, traceback):
         pass
 
-    def save_picture(self, date_time: DateTime, intent: PictureIntent, content: BytesIO) -> Picture:
+    def save_picture(self, date_time: DateTime, intent: PictureIntent, content: bytes) -> Picture:
         return Picture(
             id=date_time.format("YYYY-MM-DD_HH-mm-ss"),
             date_time=date_time,
             intent=intent,
         )
     
-    def load_picture_content(self, picture_or_picture_id: Picture | PictureID) -> BytesIO:
-        raise Exception("Not implemented! ")
+    def load_picture_content(self, id: PictureID) -> bytes | None:
+        return (Path(__file__).parent / "fake.png").read_bytes()
     
-    def load_picture_thumbnail(self, picture_or_picture_id: Picture | PictureID) -> BytesIO:
-        raise Exception("Not implemented! ")
+    def load_picture_thumbnail(self, id: PictureID) -> bytes | None:
+        return (Path(__file__).parent / "fake.png").read_bytes()
 
     def list_pictures(self) -> list[Picture]:
-        return []
+        def iter_pictures():
+            for i in range(100):
+                yield Picture(
+                    id=f"{i}",
+                    date_time=pendulum.now(),
+                    intent=PictureIntent.AD_HOC,
+                )
+        return list(iter_pictures())

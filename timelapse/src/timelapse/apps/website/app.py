@@ -27,7 +27,7 @@ def app(
     host: IPv4Address | None, 
     port: int | None
 ):
-    website_dict = {}
+    website_dict: dict = {}
     if ui_folder_path:
         website_dict["ui_folder_path"] = ui_folder_path
     if host:

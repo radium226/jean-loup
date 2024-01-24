@@ -1,6 +1,7 @@
 import json
 from cherrypy import (
-    response
+    response,
+    NotFound,
 )
 
 from ....models import (
@@ -34,10 +35,16 @@ class API():
         response.headers["Content-Type"] = "image/png"
         response.headers["Cache-Control"] = "max-age=31536000"
 
-        return self.controller.load_picture_content(id).read()
+        if not (content := self.controller.load_picture_content(id)):
+            raise NotFound()
+        
+        return content
     
     def download_picture_thumbnail(self, id: PictureID, extension: str | None = None) -> bytes:
         response.headers["Content-Type"] = "image/png"
         response.headers["Cache-Control"] = "max-age=31536000"
 
-        return self.controller.load_picture_thumbnail(id).read()
+        if not (thumbnail := self.controller.load_picture_thumbnail(id)):
+            raise NotFound()
+        
+        return thumbnail

@@ -1,5 +1,7 @@
 import { ReactNode } from "react"
 import { Link } from "react-router-dom"
+import Sidebar from "./Sidebar"
+import Content from "./Content"
 
 
 export interface LayoutProps {
@@ -36,29 +38,21 @@ export default function Layout({ children }: LayoutProps) {
         },
     ]
     return (
-        <div>
-            <header>
-
-            </header>
-            <nav>
+        <div className="min-h-screen sm:min-h-auto flex flex-col sm:flex-row w-screen">
+            <nav className="sm:h-screen sticky top-0 sm:w-1/6 bg-gray-200 text-justify pt-2">
+                <ul>
+                { entries.map(({ linkTo, text, emoji }) => (
+                    <li className="pr-2 pl-2" key={ text }>
+                        <Link className="w-full text-gray-900 bg-white focus:bg-gray-100 hover:bg-gray-100 border border-gray-200 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 me-2 mb-2" to={ linkTo }>
+                        <span className="mr-2">{ emoji }</span>
+                        <span>{ text }</span></Link>
+                    </li>
+                ) ) }
+                </ul>
             </nav>
-            <section>
+            <main className="sm:w-5/6 flex-grow flex-1 flex">
                 { children }
-            </section>
-            <aside className="fixed top-0 left-0 z-40 w-64 h-screen">
-                <div className="h-full py-4 px-4 bg-gray-100 text-left">
-                    <ul>
-                        { entries.map((entry) => (
-                            <li key={ entry.text } className={ `hover:bg-gray-200 font-bold py-2 px-4 rounded py-4 before:content-['${entry.emoji}'] before:mx-1` }>
-                                <Link className="py-2" to={ entry.linkTo }>{ entry.text }</Link>
-                            </li>
-                        )) }
-                    </ul>
-                </div>
-            </aside>
-            <footer>
-
-            </footer>
+            </main>
         </div>
     )
 }

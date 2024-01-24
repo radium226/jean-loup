@@ -1,6 +1,5 @@
 import pendulum
 from pendulum import DateTime, Time
-from io import BytesIO
 from pathlib import Path
 
 from timelapse.services import (
@@ -99,7 +98,7 @@ class SystemMock(System):
 
 
 class CameraMock(Camera):
-    pictures_taken: list[tuple[DateTime, BytesIO]]
+    pictures_taken: list[tuple[DateTime, bytes]]
     def __init__(self):
         self.pictures_taken = []
 
@@ -111,22 +110,19 @@ class CameraMock(Camera):
 
     def take_picture(
         self, format: PictureFormat
-    ) -> BytesIO:
+    ) -> bytes:
         print("Taking picture! ")
         date_time = pendulum.now()
         file_extension = format.value
-        with (
-            Path(__file__).parent
-            / "bamboo.{extension}".format(extension=file_extension)
-        ).open("rb") as f:
-            picture = BytesIO(f.read())
-            self.pictures_taken.append(
-                (
-                    date_time,
-                    picture,
-                )
+        content_file_path = Path(__file__).parent / "bamboo.{extension}".format(extension=file_extension)
+        content = content_file_path.read_bytes()
+        self.pictures_taken.append(
+            (
+                date_time,
+                content,
             )
-            return picture
+        )
+        return content
 
 
 class StorageMock(Storage):
@@ -140,15 +136,15 @@ class StorageMock(Storage):
     def list_pictures(self) -> list[Picture]:
         return []
     
-    def save_picture(self, date_time: DateTime, intent: PictureIntent, content: BytesIO) -> Picture:
+    def save_picture(self, date_time: DateTime, intent: PictureIntent, content: bytes) -> Picture:
         return Picture(
             id=date_time.format("YYYY-MM-DD_HH-mm-ss"),
             date_time=date_time,
             intent=intent,
         )
     
-    def load_picture_content(self, picture_or_picture_id: Picture | PictureID) -> BytesIO:
+    def load_picture_content(self, picture_or_picture_id: Picture | PictureID) -> bytes | None:
         raise Exception("Not implemented! ")
     
-    def load_picture_thumbnail(self, picture_or_picture_id: Picture | PictureID) -> BytesIO:
+    def load_picture_thumbnail(self, picture_or_picture_id: Picture | PictureID) -> bytes | None:
         raise Exception("Not implemented! ")
