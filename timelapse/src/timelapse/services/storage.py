@@ -3,6 +3,12 @@ from pathlib import Path
 import pendulum
 from pendulum import DateTime
 from subprocess import run, PIPE
+from PIL import (
+    Image,
+    ImageDraw,
+    ImageFont,
+)
+from io import BytesIO
 
 
 from ..models import (
@@ -138,17 +144,23 @@ class _FakeStorage(Storage):
         )
     
     def load_picture_content(self, id: PictureID) -> bytes | None:
-        return (Path(__file__).parent / "fake.png").read_bytes()
+        content = (Path(__file__).parent / "fake.png").read_bytes()
+        image = Image.open(BytesIO(content))
+        draw = ImageDraw.Draw(image)
+        draw.text((10, 10), f"{id}", fill=(0, 0, 0), font_size=100)
+        buffer = BytesIO()
+        image.save(buffer, format="PNG")
+        return buffer.getvalue()
     
     def load_picture_thumbnail(self, id: PictureID) -> bytes | None:
-        return (Path(__file__).parent / "fake.png").read_bytes()
+        return self.load_picture_content(id)
 
     def list_pictures(self) -> list[Picture]:
         def iter_pictures():
-            for i in range(100):
+            for i in range(5):
                 yield Picture(
                     id=f"{i}",
-                    date_time=pendulum.now(),
-                    intent=PictureIntent.AD_HOC,
+                    date_time=pendulum.now().subtract(minutes=100 - i),
+                    intent=PictureIntent.TIME_LAPSE,
                 )
         return list(iter_pictures())

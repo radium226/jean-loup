@@ -38,6 +38,7 @@ class Website():
         dispatcher.connect("api", "/pictures/{id}/content", controller=endpoint, action="download_picture_content", conditions=dict(method=["GET"]))
         dispatcher.connect("api", "/pictures", controller=endpoint, action="take_picture", conditions=dict(method=["POST"]))
         dispatcher.connect("api", "/pictures", controller=endpoint, action="list_pictures", conditions=dict(method=["GET"]))
+        dispatcher.connect("api", "/timeLapse", controller=endpoint, action="generate_time_lapse", conditions=dict(method=["GET"]))
         tree.mount(None, "/api", config={
             "/": {
                 "request.dispatch": dispatcher,

@@ -48,3 +48,9 @@ class API():
             raise NotFound()
         
         return thumbnail
+    
+    def generate_time_lapse(self) -> bytes:
+        response.headers["Content-Type"] = "video/mp4"
+        return self.controller.generate_time_lapse()
+        
+        

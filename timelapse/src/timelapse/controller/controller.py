@@ -1,5 +1,8 @@
 from contextlib import ExitStack
 from pendulum import DateTime, Time
+from subprocess import Popen, PIPE
+from tempfile import TemporaryDirectory
+from pathlib import Path
 
 from ..config import Config
 from ..services import (
@@ -170,3 +173,43 @@ class Controller:
     
     def list_pictures(self) -> list[Picture]:
         return self.storage.list_pictures()
+    
+    # FIXME: We need to move this to a dedicated service
+    def generate_time_lapse(self) -> bytes:
+        with TemporaryDirectory() as temp_folder_path:
+            temp_file_path = Path(temp_folder_path) / "time-laapse.mp4"
+            command = [
+                "ffmpeg",
+                    "-f", "image2pipe", 
+                    "-framerate", "2",
+                    "-i", "-", 
+                    "-i", str(Path(__file__).parent / "music.m4a"),
+                    "-c:v", "libx264", 
+                    "-c:a", "aac",
+                    "-shortest", "-map", "0:v:0", "-map", "1:a:0",
+                    "-vf", "format=yuv420p", 
+                    "-r", "30",
+                    "-movflags", "+faststart",
+                    f"{temp_file_path}"
+            ]
+            process = Popen(command, stdin=PIPE)
+            pictures = sorted(
+                filter(
+                    lambda p: p.intent == PictureIntent.TIME_LAPSE,
+                    self.list_pictures(), 
+                ), 
+                key=lambda p: p.date_time
+            )
+            for picture in pictures:
+                if stdin := process.stdin:
+                    if content := self.storage.load_picture_content(picture.id):
+                        stdin.write(content)
+
+            if stdin := process.stdin:
+                stdin.close()
+
+            exit_code = process.wait()
+            if exit_code > 0:
+                raise Exception("Unable to generate time lapse! ")
+            
+            return temp_file_path.read_bytes()

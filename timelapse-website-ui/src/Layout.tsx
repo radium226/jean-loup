@@ -17,24 +17,24 @@ interface Entry {
 export default function Layout({ children }: LayoutProps) {
     const entries: Entry[] = [
         { 
-            emoji: '📸',
-            linkTo: '/camera',
-            text: 'Prendre une photo',
+            emoji: "📸",
+            linkTo: "/camera",
+            text: "Apparail photo",
         },
         { 
-            emoji: '🎞️',
-            linkTo: '/gallery',
-            text: 'Parcourir la gallerie',
+            emoji: "🎞️",
+            linkTo: "/gallery",
+            text: "Gallerie",
         },
         { 
-            emoji: '🎬',
-            linkTo: '/timelapse',
-            text: 'Générer le timelapse',
+            emoji: "🎬",
+            linkTo: "/timeLapse",
+            text: "Time Lapse",
         },
         { 
-            emoji: '🎬',
-            linkTo: '/settings',
-            text: 'Configurer',
+            emoji: "⚙️",
+            linkTo: "/config",
+            text: "Configuration",
         },
     ]
     return (
