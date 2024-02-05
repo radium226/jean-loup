@@ -157,7 +157,7 @@ class _FakeStorage(Storage):
 
     def list_pictures(self) -> list[Picture]:
         def iter_pictures():
-            for i in range(5):
+            for i in range(100):
                 yield Picture(
                     id=f"{i}",
                     date_time=pendulum.now().subtract(minutes=100 - i),

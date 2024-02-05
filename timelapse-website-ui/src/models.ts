@@ -44,3 +44,63 @@ export function parsePicture(input: any): Picture {
         intent,
     })).parse(input)
 }
+
+
+export interface ConfigValues {
+    hotspot: {
+        enabled: boolean,
+        ssid: string,
+        password?: string,
+    },
+    timeLapse: {
+        enabled: boolean, 
+    },
+}
+
+
+export function parseConfigValues(input: any): ConfigValues {
+    return z.object({
+        time_lapse: z.object({
+            enabled: z.boolean(),
+            wakeup_time: z.string(),
+        }),
+        hotspot: z.object({
+            enabled: z.boolean(),
+            ssid: z.string(),
+            password: z.string().optional(),
+        })
+    }).transform((pythonConfigValues) => ({
+        timeLapse: {
+            enabled: pythonConfigValues.time_lapse.enabled,
+            wakeupTime: pythonConfigValues.time_lapse.wakeup_time,
+        },
+        hotspot: {
+            enabled: pythonConfigValues.hotspot.enabled,
+            ssid: pythonConfigValues.hotspot.ssid,
+            password: pythonConfigValues.hotspot.password,
+        },
+    })).parse(input)
+
+}
+
+export function formatConfigValues(configValues: ConfigValues): string {
+    return JSON.stringify(z.object({
+        hotspot: z.object({
+            enabled: z.boolean(),
+            ssid: z.string(),
+            password: z.string().optional(),
+        }),
+        timeLapse: z.object({
+            enabled: z.boolean(),
+        }),
+    }).transform(({ hotspot, timeLapse }) => ({
+        hotspot: {
+            enabled: hotspot.enabled,
+            ssid: hotspot.ssid,
+            password: hotspot.password,
+        },
+        time_lapse: {
+            enabled: timeLapse.enabled,
+        },
+    })).parse(configValues))
+}

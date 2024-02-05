@@ -19,7 +19,7 @@ export default function Layout({ children }: LayoutProps) {
         { 
             emoji: "📸",
             linkTo: "/camera",
-            text: "Apparail photo",
+            text: "Appareil photo",
         },
         { 
             emoji: "🎞️",
@@ -39,7 +39,7 @@ export default function Layout({ children }: LayoutProps) {
     ]
     return (
         <div className="min-h-screen sm:min-h-auto flex flex-col sm:flex-row w-screen">
-            <nav className="sm:h-screen sticky top-0 sm:w-1/6 bg-gray-200 text-justify pt-2">
+            <nav className="sm:h-screen sticky top-0 sm:w-1/6 bg-gray-200 text-justify pt-2 z-10">
                 <ul>
                 { entries.map(({ linkTo, text, emoji }) => (
                     <li className="pr-2 pl-2" key={ text }>

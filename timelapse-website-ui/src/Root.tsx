@@ -14,7 +14,7 @@ export default function Root() {
                 </div>
             </aside>
             <div>
-                <header className="sticky top-0 border-b mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
+                <header className="sticky top-0 border-b mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 sm:text-5xl lg:text-6xl dark:text-white">
                     <h1>Timelapse</h1>
                 </header>
                 <main className="p-4">

@@ -47,10 +47,14 @@ export default function Gallery({ client }: GalleryProps) {
     }, [])
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 m-2">
-            { pictures.map((picture) => (
-                <Frame key={ picture.id } picture={ picture } downloadPictureThumbnail={ async (picture) => { return await client.downloadPictureThumbnail(picture) } } />
-            ) ) }
+        <div className="flex-1 flex">
+            <div className="">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 m-2">
+                    { pictures.map((picture) => (
+                        <Frame key={ picture.id } picture={ picture } downloadPictureThumbnail={ async (picture) => { return await client.downloadPictureThumbnail(picture) } } />
+                    ) ) }
+                </div>
+            </div>
         </div>
     )
 }

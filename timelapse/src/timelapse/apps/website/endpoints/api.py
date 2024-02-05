@@ -53,4 +53,6 @@ class API():
         response.headers["Content-Type"] = "video/mp4"
         return self.controller.generate_time_lapse()
         
-        
+    def read_config_values(self) -> bytes:
+        response.headers["Content-Type"] = "application/json"
+        return json.dumps(self.controller.config.values.model_dump()).encode("utf-8")

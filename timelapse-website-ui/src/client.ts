@@ -1,4 +1,4 @@
-import { Picture, parsePicture } from "./models"
+import { Picture, parsePicture, ConfigValues, parseConfigValues, formatConfigValues } from "./models"
 
 
 export class Client {
@@ -47,6 +47,24 @@ export class Client {
         })
         const jsons: any[] = await response.json();
         return jsons.map((json) => parsePicture(json))
+    }
+
+    async readConfigValues(): Promise<ConfigValues> {
+        const response = await fetch(`${this.baseURL}/config_values`, {
+            method: "GET"
+        })
+        const json = await response.json();
+        return parseConfigValues(json)
+    }
+
+    async writeConfigValues(configValues: ConfigValues): Promise<void> {
+        fetch(`${this.baseURL}/config`, {
+            method: "PUT",
+            body: JSON.stringify(formatConfigValues(configValues)),
+            headers: {
+                "Content-Types": "application/json",
+            },
+        })
     }
     
 }

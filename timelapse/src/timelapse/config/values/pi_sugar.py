@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from pathlib import Path
+from ...types_for_pydantic import Path
 
 
 class PiSugar(BaseModel):

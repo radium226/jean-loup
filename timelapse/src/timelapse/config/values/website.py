@@ -1,6 +1,5 @@
 from pydantic import BaseModel
-from pathlib import Path
-from ipaddress import IPv4Address
+from ...types_for_pydantic import Path, IPv4Address
 
 
 class Website(BaseModel):

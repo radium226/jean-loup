@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from pathlib import Path
+from ...types_for_pydantic import Path
 
 from .hotspot import Hotspot
 from .time_lapse import TimeLapse
