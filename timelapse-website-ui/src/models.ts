@@ -50,6 +50,7 @@ export interface ConfigValues {
     timeLapse: {
         enabled: boolean,
         wakeupTime: string | undefined, 
+        delayInMinutes: number | undefined,
     },
 }
 
@@ -58,22 +59,14 @@ export function parseConfigValues(input: any): ConfigValues {
     return z.object({
         time_lapse: z.object({
             enabled: z.boolean(),
-            wakeup_time: z.string(),
+            wakeup_time: z.string().optional(),
+            delay_in_minutes: z.number().optional(),
         }),
-        hotspot: z.object({
-            enabled: z.boolean(),
-            ssid: z.string(),
-            password: z.string().optional(),
-        })
     }).transform((pythonConfigValues) => ({
         timeLapse: {
             enabled: pythonConfigValues.time_lapse.enabled,
             wakeupTime: pythonConfigValues.time_lapse.wakeup_time,
-        },
-        hotspot: {
-            enabled: pythonConfigValues.hotspot.enabled,
-            ssid: pythonConfigValues.hotspot.ssid,
-            password: pythonConfigValues.hotspot.password,
+            delayInMinutes: pythonConfigValues.time_lapse.delay_in_minutes,
         },
     })).parse(input)
 
@@ -81,22 +74,16 @@ export function parseConfigValues(input: any): ConfigValues {
 
 export function formatConfigValues(configValues: ConfigValues): string {
     return JSON.stringify(z.object({
-        hotspot: z.object({
-            enabled: z.boolean(),
-            ssid: z.string(),
-            password: z.string().optional(),
-        }),
         timeLapse: z.object({
             enabled: z.boolean(),
+            wakeupTime: z.string().optional(),
+            delayInMinutes: z.number().optional(),
         }),
-    }).transform(({ hotspot, timeLapse }) => ({
-        hotspot: {
-            enabled: hotspot.enabled,
-            ssid: hotspot.ssid,
-            password: hotspot.password,
-        },
+    }).transform(({ timeLapse }) => ({
         time_lapse: {
             enabled: timeLapse.enabled,
+            wakeup_time: timeLapse.wakeupTime,
+            delay_in_minutes: timeLapse.delayInMinutes,
         },
     })).parse(configValues))
 }

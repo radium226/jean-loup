@@ -85,6 +85,10 @@ class Controller:
         self.pi_sugar.wakeup_time = next_wakeup_time
         self.schedule_timer(next_wakeup_date_time)
 
+        config = self.config.override_with(dict(time_lapse=dict(wakeup_time=next_wakeup_time)))
+        config.save_values()
+        self.config = config
+
     def schedule_timer(self, date_time: DateTime) -> None:
         self.system.schedule_service("timelapse-handle-event@timer-triggered", date_time)
 

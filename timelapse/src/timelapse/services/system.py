@@ -64,6 +64,7 @@ class _GenuineSystem(System):
                 "--on-calendar={date_time}".format(date_time=date_time.format("YYYY-MM-DD[ ]HH:mm:ss")),
                 f"--unit={service_name}.service",
             ]
+            print(command)
             run(command, check=True)
 
 

@@ -8,14 +8,15 @@ from textwrap import dedent
 from retrying import retry
 
 from ...logging import info
+from ...config import Config
 
 class Hotspot:
 
-    def __init__(self, ip_network: IPv4Network, domain: str, wireless_hardware_device: str = "phy0", ssid="Jean Loup"):
-        self.wireless_hardware_device = wireless_hardware_device
-        self.ip_network = ip_network
-        self.domain = domain
-        self.ssid = ssid
+    def __init__(self, config: Config, ip_network: IPv4Network | None = None, domain: str | None = None, wireless_hardware_device: str | None = None, ssid: str | None = None):
+        self.wireless_hardware_device = wireless_hardware_device or config.values.hotspot.wireless_hardware_device
+        self.ip_network = ip_network or config.values.hotspot.ip_network
+        self.domain = domain or config.values.hotspot.domain
+        self.ssid = ssid or config.values.hotspot.ssid
 
         self.exit_stack = ExitStack()
 
@@ -51,6 +52,10 @@ class Hotspot:
 
     def _start_dnsmasq(self, runtime_folder_path: Path):
         dnsmasq_config_file_path = runtime_folder_path / "dnsmasq.conf"
+        additionnal_hosts_file_path = runtime_folder_path / "additional-hosts"
+        with additionnal_hosts_file_path.open("w") as hosts_file:
+            hosts_file.write(f"{self.ip_network[2]} jean-loup.{self.domain}\n")
+
         with dnsmasq_config_file_path.open("w") as dnsmasq_config_file:
             dnsmasq_config_file.write(dedent("""\
                 interface=lo,ap0
@@ -64,13 +69,14 @@ class Hotspot:
                 dhcp-range={dhcp_range_min_address},{dhcp_range_max_address},12h
                 dhcp-option=3,{dhcp_address}
                 no-hosts
-                # addn-hosts=/home/alarm/hosts
+                addn-hosts={additionnal_hosts_file_path}
                 expand-hosts                                       
             """).format(
                 domain=self.domain,
                 dhcp_range_min_address=self.ip_network[2],
                 dhcp_range_max_address=self.ip_network[-1],
                 dhcp_address=self.ip_network[1],
+                additionnal_hosts_file_path=str(additionnal_hosts_file_path),
             ))
         self.exit_stack.callback(lambda: dnsmasq_config_file_path.unlink())
 
@@ -141,7 +147,7 @@ class Hotspot:
         wait_for()
 
 
-    def wait_for(self) -> None:
+    def serve_forever(self) -> None:
         event = Event()
 
         def signal_handler(signum, frame):

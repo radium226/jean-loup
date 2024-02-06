@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 from deepmerge import Merger
 from pendulum import Time
-from ipaddress import IPv4Address
+from ipaddress import IPv4Address, IPv4Network
 
 from .values import (
     ConfigValues,
@@ -28,7 +28,10 @@ class Config:
         ),
         hotspot=Hotspot(
             enabled=True,
-            ssid="bamboo",
+            ssid="Jean-Loup",
+            domain="bambou",
+            ip_network=IPv4Network("192.168.50.1/24", strict=False),
+            wireless_hardware_device="phy0",
         ),
         website=Website(
             enabled=True,
@@ -81,6 +84,7 @@ class Config:
         ...   
 
     def override_with(self, other: Union["Config", dict, Path]) -> "Config":
+        print(other)
         if isinstance(other, Config):
             other_obj = other.obj
             other_file_path = None
@@ -92,6 +96,8 @@ class Config:
         elif isinstance(other, Path):
             other_obj = json.loads(other.read_text())
             other_file_path = other
+        else:
+            print(type(other))
 
         merger = Merger(
             [

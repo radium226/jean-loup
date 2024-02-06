@@ -16,7 +16,6 @@ from .endpoint_type import EndpointType
 @option("--ui-folder", "ui_folder_path", type=Path, required=False, default=None)
 @option("--host", type=IPv4Address, required=False, default=None)
 @option("--port", type=int, required=False, default=None)
-@option("--ui-folder", "ui_folder_path", type=Path, required=False, default=None)
 @option("--dry-run", "dry_run", is_flag=True, required=False, default=False)
 @option("--exclude-endpoint", "excluded_endpoint_types", multiple=True, type=Choice([endpoint_type for endpoint_type in EndpointType]), required=False, default=[])
 def app(

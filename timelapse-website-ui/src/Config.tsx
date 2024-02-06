@@ -13,12 +13,14 @@ export default function ConfigForm({ client }: ConfigProps) {
 
     const [wakeupTime, setWakeupTime] = useState<string | undefined>(undefined);
     const [isEnabled, setIsEnabled] =  useState<boolean>(false);
+    const [delayInMinutes, setDelayInMinutes] = useState<number | undefined>(undefined);
 
     useEffect(() => {
         ( async () => {
             const configValues = await client.readConfig()
             setWakeupTime(configValues.timeLapse.wakeupTime)
             setIsEnabled(configValues.timeLapse.enabled);
+            setDelayInMinutes(configValues.timeLapse.delayInMinutes);
         })();
     }, [])
 
@@ -47,6 +49,15 @@ export default function ConfigForm({ client }: ConfigProps) {
                             </div>
                         </div>
                     </div>
+
+                    <div className="flex-1 flex flex-col gap-2 justify-center">
+                        <div className="flex-1 flex flex-col sm:flex-row items-center justify-center">
+                            <label htmlFor="intervalInMinutes" className="block w-full sm:w-1/6 text-center sm:text-right pr-2">Délai (en minutes)&nbsp;:&nbsp;</label>
+                            <div className="flex-1 flex flex-col w-full sm:w-5/6 text-center sm:text-left sm:items-left items-center sm:items-start">
+                                <input type="text" value={ delayInMinutes == undefined ? "" : delayInMinutes } onChange={(event) => setDelayInMinutes(parseInt(event.target.value))} id="intervalInMinutes" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </fieldset>
             <button 
@@ -55,6 +66,7 @@ export default function ConfigForm({ client }: ConfigProps) {
                     timeLapse: {
                         wakeupTime: wakeupTime,
                         enabled: isEnabled,
+                        delayInMinutes: delayInMinutes,
                     }
                 }) }
                 className="mt-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"

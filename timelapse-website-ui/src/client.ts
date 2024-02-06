@@ -60,7 +60,7 @@ export class Client {
     async writeConfig(configValues: ConfigValues): Promise<void> {
         fetch(`${this.baseURL}/config`, {
             method: "PUT",
-            body: JSON.stringify(formatConfigValues(configValues)),
+            body: formatConfigValues(configValues),
             headers: {
                 "Content-Types": "application/json",
             },

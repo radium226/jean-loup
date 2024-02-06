@@ -60,6 +60,7 @@ class API():
     
     def write_config(self):
         obj = json.loads(request.body.read())
+        print(type(obj))
         config = self.controller.config.override_with(obj)
         self.controller.save_config(config)
         
