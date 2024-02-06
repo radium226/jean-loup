@@ -3,6 +3,7 @@ from tempfile import TemporaryDirectory
 from typing import Generator
 from pathlib import Path
 from textwrap import dedent
+import json
 
 from timelapse.config import Config
 
@@ -36,3 +37,13 @@ def test_config(
 
     config = config.override_with(Config(dict(hotspot=dict(enabled=True))))
     assert config.values.hotspot.enabled
+
+def test_write_config(
+    config_file_path: Path,
+) -> None:
+    config = Config.default(config_file_path)
+    assert config.values.hotspot.enabled
+    config = config.override_with(dict(time_lapse=dict(enabled=False)))
+    assert config.values.hotspot.enabled
+    config.save_values()
+    assert not json.loads(config_file_path.read_text())["time_lapse"]["enabled"]

@@ -19,7 +19,7 @@ class Config:
     DEFAULT_FILE_PATH = Path("/etc/timelapse/config.json")
 
     DEFAULT_VALUES = ConfigValues(
-        storage_folder_path=Path("/var/lib/timelapse/storage"),
+        storage_folder_path=Path("/var/lib/timelapse"),
         time_lapse=TimeLapse(
             enabled=True,
             wakeup_time=Time(12, 0, 0),
@@ -32,7 +32,7 @@ class Config:
         ),
         website=Website(
             enabled=True,
-            ui_folder_path=Path("/var/lib/timelapse/website"),
+            ui_folder_path=Path("/usr/lib/timelapse/website/ui"),
             host=IPv4Address("0.0.0.0"),
             port=8080,
         ),
@@ -111,7 +111,7 @@ class Config:
                 self.obj, 
                 other_obj,
             ), 
-            file_path=self.file_path or other_file_path
+            file_path=self.file_path
         )
 
     @property

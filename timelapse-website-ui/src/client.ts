@@ -49,15 +49,15 @@ export class Client {
         return jsons.map((json) => parsePicture(json))
     }
 
-    async readConfigValues(): Promise<ConfigValues> {
-        const response = await fetch(`${this.baseURL}/config_values`, {
+    async readConfig(): Promise<ConfigValues> {
+        const response = await fetch(`${this.baseURL}/config`, {
             method: "GET"
         })
         const json = await response.json();
         return parseConfigValues(json)
     }
 
-    async writeConfigValues(configValues: ConfigValues): Promise<void> {
+    async writeConfig(configValues: ConfigValues): Promise<void> {
         fetch(`${this.baseURL}/config`, {
             method: "PUT",
             body: JSON.stringify(formatConfigValues(configValues)),

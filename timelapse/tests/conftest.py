@@ -1,5 +1,9 @@
 from pytest import fixture
 
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Generator
+
 from timelapse.config import Config
 from timelapse.controller import Controller
 
@@ -12,8 +16,14 @@ from .mocks import (
 
 
 @fixture
-def config() -> Config:
-    return Config.default()
+def config_file_path() -> Generator[Path, None, None]:
+    with TemporaryDirectory() as temp_folder_path:
+        file_path = Path(temp_folder_path) / "config.json"
+        yield file_path
+
+@fixture
+def config(config_file_path: Path) -> Config:
+    return Config.default(config_file_path)
 
 
 @fixture

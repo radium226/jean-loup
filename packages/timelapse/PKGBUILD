@@ -45,6 +45,7 @@ depends=(
     "python-retrying"
     "ffmpeg"
     "python-deepmerge"
+    "python-pillow"
 )
 
 build() {

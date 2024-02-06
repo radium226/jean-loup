@@ -63,7 +63,7 @@ class _GenuineStorage(Storage):
     def list_pictures(self) -> list[Picture]:
         def iter_pictures():
             for picture_file_path in (self.folder_path / "pictures").glob("**/*.png"):
-                id = picture_file_path.stem,
+                id = picture_file_path.stem
                 intent = PictureIntent(picture_file_path.parent.name)
                 yield Picture(
                     id=id,

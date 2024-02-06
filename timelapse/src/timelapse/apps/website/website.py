@@ -39,7 +39,8 @@ class Website():
         dispatcher.connect("api", "/pictures", controller=endpoint, action="take_picture", conditions=dict(method=["POST"]))
         dispatcher.connect("api", "/pictures", controller=endpoint, action="list_pictures", conditions=dict(method=["GET"]))
         dispatcher.connect("api", "/timeLapse", controller=endpoint, action="generate_time_lapse", conditions=dict(method=["GET"]))
-        dispatcher.connect("api", "/config_values", controller=endpoint, action="read_config_values", conditions=dict(method=["GET"]))
+        dispatcher.connect("api", "/config", controller=endpoint, action="read_config", conditions=dict(method=["GET"]))
+        dispatcher.connect("api", "/config", controller=endpoint, action="write_config", conditions=dict(method=["PUT"]))
         tree.mount(None, "/api", config={
             "/": {
                 "request.dispatch": dispatcher,

@@ -47,13 +47,9 @@ export function parsePicture(input: any): Picture {
 
 
 export interface ConfigValues {
-    hotspot: {
-        enabled: boolean,
-        ssid: string,
-        password?: string,
-    },
     timeLapse: {
-        enabled: boolean, 
+        enabled: boolean,
+        wakeupTime: string | undefined, 
     },
 }
 

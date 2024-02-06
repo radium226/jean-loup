@@ -19,7 +19,6 @@ class UI():
         file_path = self.folder_path / url_path
         if file_path.exists() and file_path.is_file():
             mime_type, _ = guess_type(str(file_path.absolute()))
-            print(mime_type)
             response.headers["Content-Type"] = mime_type
             return file_path.open("rb")
         else:

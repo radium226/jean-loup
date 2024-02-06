@@ -33,7 +33,7 @@ class PydanticAnnotationForIPV4Address:
         """
 
         def validate_from_str(value: str) -> ipaddress.IPv4Address:
-            return ipaddress.IPv4Address(value, strict=False)
+            return ipaddress.IPv4Address(value)
 
         from_str_schema = chain_schema(
             [
@@ -52,7 +52,7 @@ class PydanticAnnotationForIPV4Address:
                 ]
             ),
             serialization=plain_serializer_function_ser_schema(
-                lambda instance: f"${instance}"
+                lambda instance: f"{instance}"
             ),
         )
 

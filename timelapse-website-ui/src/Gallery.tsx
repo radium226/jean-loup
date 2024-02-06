@@ -1,4 +1,5 @@
-import { Client, Picture } from "./client"
+import { Client } from "./client"
+import { Picture } from "./models"
 import { useState, useEffect, useCallback } from 'react'
 import { toDataURL } from "./utils"
 

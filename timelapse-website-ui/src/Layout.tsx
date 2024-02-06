@@ -1,7 +1,5 @@
 import { ReactNode } from "react"
 import { Link } from "react-router-dom"
-import Sidebar from "./Sidebar"
-import Content from "./Content"
 
 
 export interface LayoutProps {

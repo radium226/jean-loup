@@ -70,11 +70,16 @@ class Controller:
             current_date_time=self.pi_sugar.now(),
         )
     
-    def schedule_next_wakeup(self, wakeup_time: Time | None, current_date_time: DateTime) -> None:
+    def schedule_next_wakeup(self, wakeup_time: Time | None, current_date_time: DateTime, offset: bool = True) -> None:
         wakeup_time = wakeup_time or current_date_time.time()
         wakeup_date_time = DateTime.combine(current_date_time.date(), wakeup_time)
         delay_in_minutes = self.config.values.time_lapse.delay_in_minutes
-        next_wakeup_date_time = wakeup_date_time.add(minutes=delay_in_minutes)
+        
+        if offset:
+            next_wakeup_date_time = wakeup_date_time.add(minutes=delay_in_minutes)
+        else:
+            next_wakeup_date_time = wakeup_date_time
+        
         next_wakeup_time = next_wakeup_date_time.time()
         
         self.pi_sugar.wakeup_time = next_wakeup_time
@@ -213,3 +218,14 @@ class Controller:
                 raise Exception("Unable to generate time lapse! ")
             
             return temp_file_path.read_bytes()
+        
+    def save_config(self, config: Config) -> None:
+        config.save_values()
+        if config.values.time_lapse.enabled:
+            self.schedule_next_wakeup(config.values.time_lapse.wakeup_time, self.now(), offset=False)
+        else:
+            self.pi_sugar.wakeup_time = None
+            self.system.schedule_service("timelapse-handle-event@timer-triggered", None)
+
+        self.config = config
+        

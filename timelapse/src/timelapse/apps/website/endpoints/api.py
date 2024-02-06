@@ -1,6 +1,7 @@
 import json
 from cherrypy import (
     response,
+    request,
     NotFound,
 )
 
@@ -53,6 +54,12 @@ class API():
         response.headers["Content-Type"] = "video/mp4"
         return self.controller.generate_time_lapse()
         
-    def read_config_values(self) -> bytes:
+    def read_config(self) -> bytes:
         response.headers["Content-Type"] = "application/json"
         return json.dumps(self.controller.config.values.model_dump()).encode("utf-8")
+    
+    def write_config(self):
+        obj = json.loads(request.body.read())
+        config = self.controller.config.override_with(obj)
+        self.controller.save_config(config)
+        
