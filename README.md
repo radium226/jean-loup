@@ -1,3 +1,18 @@
+# Jean-Loup
+
+## 🚧 TODO
+### High Priority
+- [ ] Fix the way we tell the PiSugar board to shutdown (by using the `&` as specified in the documentation)
+- [ ] Cleanup files that are presents (pictures, `journald`, etc.)
+- [ ] Fix the time lapse generation
+### Low Priority
+- [ ] Rename `timelapse` packages to `jean_loup` (and the `timelapse-*` CLI to `jl-*`)
+- [ ] Write documentation
+- [ ] Auto sync RTC & web time
+- [ ] Connect to Bluetooth and emit status
+- [ ] Allow Wifi configuration
+
+
 https://www.raspberrypi.com/documentation/computers/camera_software.html#building-rpicam-apps
 
 http://os.archlinuxarm.org/os/ArchLinuxARM-armv7-latest.tar.gz
