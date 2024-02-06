@@ -12,9 +12,11 @@
   "dependencies": {
     "@types/base64-stream": "^1.0.5",
     "base64-stream": "^1.0.0",
+    "flowbite-react": "^0.7.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.21.2"
+    "react-router-dom": "^6.21.2",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",

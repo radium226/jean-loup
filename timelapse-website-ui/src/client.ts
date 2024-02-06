@@ -1,16 +1,4 @@
-
-export interface Picture {
-    id: string;
-    dateTime: Date;
-}
-
-
-function parsePicture(json: any): Picture {
-    return {
-        id: json.id,
-        dateTime: new Date(json.dateTime),
-    }
-}
+import { Picture, parsePicture, ConfigValues, parseConfigValues, formatConfigValues } from "./models"
 
 
 export class Client {
@@ -27,6 +15,7 @@ export class Client {
         })
         const json = await response.json()
         const picture = parsePicture(json)
+        console.log(picture)
         return picture
     }
 
@@ -57,7 +46,25 @@ export class Client {
             method: "GET",
         })
         const jsons: any[] = await response.json();
-        return jsons.map(parsePicture)
+        return jsons.map((json) => parsePicture(json))
+    }
+
+    async readConfig(): Promise<ConfigValues> {
+        const response = await fetch(`${this.baseURL}/config`, {
+            method: "GET"
+        })
+        const json = await response.json();
+        return parseConfigValues(json)
+    }
+
+    async writeConfig(configValues: ConfigValues): Promise<void> {
+        fetch(`${this.baseURL}/config`, {
+            method: "PUT",
+            body: formatConfigValues(configValues),
+            headers: {
+                "Content-Types": "application/json",
+            },
+        })
     }
     
 }

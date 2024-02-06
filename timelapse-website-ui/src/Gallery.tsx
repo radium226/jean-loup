@@ -1,4 +1,5 @@
-import { Client, Picture } from "./client"
+import { Client } from "./client"
+import { Picture } from "./models"
 import { useState, useEffect, useCallback } from 'react'
 import { toDataURL } from "./utils"
 
@@ -26,12 +27,9 @@ export function Frame({ picture, downloadPictureThumbnail }: FrameProps) {
     }, [downloadThumbnail])
 
     return (
-        <div className="h-auto max-w-full">
-            <div>
-                { source !== null ? <img className="rounded-lg" src={source} /> : <div className="text-6xl">🪴</div> }
-            </div>
-            <p>{ picture.id }</p>
-        </div>
+        <>
+            { source !== null ? <img className="object-contain h-auto w-auto rounded-lg" src={source} /> : <div className="text-6xl">🪴</div> }
+        </>
     )
 
 }
@@ -50,11 +48,13 @@ export default function Gallery({ client }: GalleryProps) {
     }, [])
 
     return (
-        <div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                { pictures.map((picture) => (
-                    <Frame key={ picture.id } picture={ picture } downloadPictureThumbnail={ async (picture) => { return await client.downloadPictureThumbnail(picture) } } />
-                ) ) }
+        <div className="flex-1 flex">
+            <div className="">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 m-2">
+                    { pictures.map((picture) => (
+                        <Frame key={ picture.id } picture={ picture } downloadPictureThumbnail={ async (picture) => { return await client.downloadPictureThumbnail(picture) } } />
+                    ) ) }
+                </div>
             </div>
         </div>
     )

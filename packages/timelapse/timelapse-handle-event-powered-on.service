@@ -2,6 +2,7 @@
 DefaultDependencies=no
 Before=shutdown.target
 Requires=pisugar-server.service
+After=pisugar-server.service
 
 
 [Service]

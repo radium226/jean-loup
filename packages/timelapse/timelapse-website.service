@@ -1,3 +1,4 @@
 [Service]
 User=timelapse
-ExecStart=timelapse website
+ExecStart=timelapse-website --port=80
+AmbientCapabilities=CAP_NET_BIND_SERVICE
