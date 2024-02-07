@@ -115,16 +115,22 @@ class _GenuinePiSugar(PiSugar):
         if delay > 255:
             raise Exception("Delay must be between 0 and 255! ")
         
-        # FIXME: It's wrong: we should use I2C directly and do the AND stuff which is in the doc
-        commands = [
-            ["i2cset", "-y", "1", "0x57", "0x0B", "0x29"],
-            ["i2cset", "-y", "1", "0x57", "0x09", "0x%0.2X" % delay],
-            ["i2cset", "-y", "1", "0x57", "0x02", "0x44"],
-        ]
-        for command in commands:
-            process = run(command)
-            if process.returncode != 0:
-                raise Exception("Unable to power off! ")
+        # First, let's make everything writable
+        run(["i2cset", "-y", "1", "0x57", "0x0B", "0x29"], check=True)
+
+        # Then set the delay
+        run(["i2cset", "-y", "1", "0x57", "0x09", "0x%0.2X" % delay], check=True)
+
+        # Get the byte value
+        ic2get_process = run(["i2cget", "-y", "1", "0x57", "0x02"], check=True, capture_output=True, text=True)
+        old_value = int(ic2get_process.stdout, 0)
+        info("old_value=0x{:02x}".format(old_value))
+
+        index = 5 # See in the doc
+        new_value = old_value & ~(1 << index)
+        info("new_value=0x{:02x}".format(new_value))
+        
+        run(["i2cset", "-y", "1", "0x57", "0x02", "0x{:02x}".format(new_value)], check=True)
 
 
 class _FakePiSugar(PiSugar):
