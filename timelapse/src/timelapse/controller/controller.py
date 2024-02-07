@@ -186,9 +186,11 @@ class Controller:
     # FIXME: We need to move this to a dedicated service
     def generate_time_lapse(self) -> bytes:
         with TemporaryDirectory() as temp_folder_path:
-            temp_file_path = Path(temp_folder_path) / "time-laapse.mp4"
+            temp_file_path = Path(temp_folder_path) / "time-lapse.mp4"
             command = [
                 "ffmpeg",
+                    "-hide_banner", 
+                    "-loglevel", "warning",
                     "-f", "image2pipe", 
                     "-framerate", "2",
                     "-i", "-", 
@@ -196,25 +198,16 @@ class Controller:
                     "-c:v", "libx264", 
                     "-c:a", "aac",
                     "-shortest", "-map", "0:v:0", "-map", "1:a:0",
-                    "-vf", "format=yuv420p", 
+                    "-vf", "format=yuv420p,scale=320:-1,scale=trunc(iw/2)*2:trunc(ih/2)*2",
                     "-r", "30",
                     "-movflags", "+faststart",
                     f"{temp_file_path}"
             ]
+            info(f"command={command}")
             process = Popen(command, stdin=PIPE)
-            pictures = sorted(
-                filter(
-                    lambda p: p.intent == PictureIntent.TIME_LAPSE,
-                    self.list_pictures(), 
-                ), 
-                key=lambda p: p.date_time
-            )
-            for picture in pictures:
-                if stdin := process.stdin:
-                    if content := self.storage.load_picture_content(picture.id):
-                        stdin.write(content)
-
+            
             if stdin := process.stdin:
+                self.storage.write_picture_contents_to(PictureIntent.TIME_LAPSE, stdin)
                 stdin.close()
 
             exit_code = process.wait()

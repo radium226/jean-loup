@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Protocol, IO
 from pathlib import Path
 import pendulum
 from pendulum import DateTime
@@ -38,6 +38,9 @@ class Storage(Protocol):
     def load_picture_thumbnail(self, id: PictureID) -> bytes | None:
         ...
     
+    def write_picture_contents_to(self, intent: PictureIntent, io: IO[bytes] ) -> None:
+        ...
+
     @classmethod
     def genuine(cls, folder_path: Path) -> "Storage":
         return _GenuineStorage(folder_path)
@@ -110,6 +113,18 @@ class _GenuineStorage(Storage):
             return (self.folder_path / ".thumbnails" / f"{picture.id}.png").read_bytes()
         
         return None
+    
+    def write_picture_contents_to(self, intent: PictureIntent, io: IO[bytes] ) -> None:
+        pictures = sorted(
+            filter(
+                lambda p: p.intent == PictureIntent.TIME_LAPSE,
+                self.list_pictures(), 
+            ), 
+            key=lambda p: p.date_time
+        )
+
+        for picture in pictures:
+            io.write((self.folder_path / "pictures" / f"{picture.intent}" / f"{picture.id}.png").read_bytes())
 
     def generate_tumbnail(self, content: bytes) -> bytes:
         command = [
@@ -164,3 +179,9 @@ class _FakeStorage(Storage):
                     intent=PictureIntent.TIME_LAPSE,
                 )
         return list(iter_pictures())
+    
+    def write_picture_contents_to(self, intent: PictureIntent, io: IO[bytes] ) -> None:
+        for picture in self.list_pictures():
+            if picture.intent == intent:
+                if content := self.load_picture_content(picture.id):
+                    io.write(content)

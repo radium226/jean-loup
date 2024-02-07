@@ -4,7 +4,7 @@
 ### High Priority
 - [x] Fix the way we tell the PiSugar board to shutdown (by using the `&` as specified in the documentation)
 - [ ] Cleanup files that are presents (pictures, `journald`, etc.)
-- [ ] Fix the time lapse generation
+- [x] Fix the time lapse generation
 - [x] Add the other WiFi configuration
 - [ ] Put back the `systemd.volatile=overlay` kernel flag
 - [x] Set the auto wake up after 1 day
