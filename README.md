@@ -2,7 +2,7 @@
 
 ## 🚧 TODO
 ### High Priority
-- [ ] Fix the way we tell the PiSugar board to shutdown (by using the `&` as specified in the documentation)
+- [x] Fix the way we tell the PiSugar board to shutdown (by using the `&` as specified in the documentation)
 - [ ] Cleanup files that are presents (pictures, `journald`, etc.)
 - [ ] Fix the time lapse generation
 - [x] Add the other WiFi configuration
