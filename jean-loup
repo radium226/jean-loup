@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+
+SD_CARD_DEVICE="/dev/mmcblk0"
+export SD_CARD_DEVICE
+
+SD_CARD_MOUNT_POINT="./sd-card"
+export SD_CARD_MOUNT_POINT
+
+
+BOOTSTRAP_ARCHIVE_URL="http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-armv7-latest.tar.gz"
+export BOOTSTRAP_ARCHIVE_URL
+
+
+mount_sd_card()
+{
+    declare device=
+    device="${1}"
+    shift 1
+
+    declare mount_point=
+    mount_point="${1}"
+    shift 1
+
+    sudo mount "${device}p2" "${mount_point}"
+    sudo mount "${device}p1" "${mount_point}/boot"
+}
+
+unmount_sd_card()
+{
+    declare mount_point=
+    mount_point="${1}"
+    shift 1
+
+    sudo umount "${mount_point}/boot"
+    sudo umount "${mount_point}"
+}
+
+bootstrap_sd_card()
+{
+    declare sd_card_mount_point=
+    sd_card_mount_point="${1}"
+    shift 1
+
+    if ! [[ -f "./bootstrap.tar.gz" ]]; then
+        wget "${BOOTSTRAP_ARCHIVE_URL}" -O "./bootstrap.tar.gz"
+    fi
+    
+    if ! [[ -f "${sd_card_mount_point}/etc/os-release" ]]; then
+        sudo bsdtar -xpf "./bootstrap.tar.gz" -C "${sd_card_mount_point}"
+        sync
+    fi
+
+    sudo systemctl \
+        --root="${sd_card_mount_point}" \
+            enable \
+                "systemd-networkd.service" \
+                "wpa_supplicant@wlan0.service" \
+                "sshd.service"
+
+    sudo cp "./bootstrap/wpa_supplicant-wlan0.conf" "${sd_card_mount_point}/etc/wpa_supplicant/wpa_supplicant-wlan0.conf"
+    sudo mkdir -p "${sd_card_mount_point}/root/.ssh"
+    sudo chmod 700 "${sd_card_mount_point}/root/.ssh"
+    sudo cp "./bootstrap/authorized_keys" "${sd_card_mount_point}/root/.ssh/authorized_keys"
+    sudo chown "root:root" "${sd_card_mount_point}/root/.ssh/authorized_keys"
+    sudo chmod 600 "${sd_card_mount_point}/root/.ssh/authorized_keys"
+    
+}
+
+
+main()
+{
+    declare action=
+    action="${1}"
+    shift 1
+
+    case "${action}" in
+        "msc" | "mount-sd-card" )
+            mount_sd_card "${SD_CARD_DEVICE}" "${SD_CARD_MOUNT_POINT}"
+            ;;
+
+        "usc" | "unmount-sd-card" )
+            unmount_sd_card "${SD_CARD_MOUNT_POINT}"
+            ;;
+
+        "bsc" | "bootstrap-sd-card" )
+            bootstrap_sd_card "${SD_CARD_MOUNT_POINT}"
+            ;;
+
+
+        "try" )
+            uv \
+                --project="./sources" \
+                    build \
+                        --sdist \
+                        --out-dir="./packages/pisugar"
+
+            cd "./packages/pisugar"
+            uv run makepkg --syncdeps --noconfirm --cleanbuild --force
+            cd "-"
+
+            scp "./packages/pisugar/jean-loup-pisugar-0.1.0-1-any.pkg.tar.zst" "root@jean-loup.local:"
+            ssh "root@jean-loup.local" 'pacman -U "jean-loup-pisugar-0.1.0-1-any.pkg.tar.zst" --noconfirm'
+            
+            ;;
+        *)
+            echo "Unknown action: ${action}"
+            exit 1
+            ;;
+    esac
+
+}
+
+main "$@"
