@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+declare SCRIPT_FILE_PATH
+SCRIPT_FILE_PATH="$( realpath "${0}" )"
+
+declare SCRIPT_FILE_NAME
+SCRIPT_FILE_NAME="$( basename "${SCRIPT_FILE_PATH}" )"
+
+
+declare -a PACKAGE_NAMES
+
+# Smoke test
+# PACKAGE_NAMES+=("greet")
+
+# Camera
+# PACKAGE_NAMES+=("libpisp")
+# PACKAGE_NAMES+=("libcamera-rpi")
+PACKAGE_NAMES+=("rpicam-apps")
+
+# # PiSugar
+# PACKAGE_NAMES+=("pisugar")
+
+# # Jean-Loup
+# PACKAGE_NAMES+=("jean-loup")
+
+main()
+{
+    declare inside_chroot
+    inside_chroot=false
+
+    while true; do
+        case "${1:-}" in
+            --inside-chroot | -i )
+                inside_chroot=true
+                shift 1
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    if ! ${inside_chroot}; then
+        declare pacman_repo_folder_path
+        pacman_repo_folder_path="./work/pacman/repo"
+
+        declare pacman_repo_db_file_path
+        pacman_repo_db_file_path="${pacman_repo_folder_path}/jean-loup.db.tar.gz"
+
+        declare 
+
+        if [[ ! -f "${pacman_repo_db_file_path}" ]]; then
+            mkdir -p "./work/pacman/repo"
+            repo-add "${pacman_repo_db_file_path}"
+        fi
+
+        declare builder_rootfs_folder_path
+        builder_rootfs_folder_path="./work/builder/rootfs"
+        mkdir -p "${builder_rootfs_folder_path}"
+        setup_builder
+
+        declare package_name
+        for package_name in "${PACKAGE_NAMES[@]}"; do
+            declare package_file_path
+            
+            find "./packages/${package_name}" -name "*.pkg.tar.xz" -exec rm "{}" \;
+
+            arch-chroot \
+                -u "makepkg" \
+                    "${builder_rootfs_folder_path}" \
+                        "/usr/local/bin/build-packages" \
+                            --inside-chroot \
+                                "${package_name}"
+
+            declare package_file_path
+            find "./packages/${package_name}" -name "*.pkg.tar.xz" | while read package_file_path; do
+                cp "${package_file_path}" "${pacman_repo_folder_path}"
+                repo-add "${pacman_repo_db_file_path}" "${package_file_path}"
+
+                cp "${package_file_path}" "./cache/pacman/pkg"
+            done
+        done
+
+        
+    else
+        declare package_name
+        package_name="${1}"
+        shift 1
+
+        build_package "${package_name}"
+    fi
+}
+
+setup_builder()
+{
+    declare rootfs_folder_path
+    rootfs_folder_path="./work/builder/rootfs"
+    
+    declare pacman_cache_folder_path
+    pacman_cache_folder_path="./cache/pacman/packages"
+
+    declare pacman_repo_folder_path
+    pacman_repo_folder_path="./work/pacman/repo"
+
+    mount --bind "${rootfs_folder_path}" "${rootfs_folder_path}"
+
+    # Pacman cache
+    mkdir -p "${rootfs_folder_path}/var/cache/pacman/pkg"
+    mount --bind "./cache/pacman/pkg" "${rootfs_folder_path}/var/cache/pacman/pkg"
+    
+    # Pacman repo
+    mkdir -p "${rootfs_folder_path}/var/local/lib/pacman-repo"
+    mount --bind "${pacman_repo_folder_path}" "${rootfs_folder_path}/var/local/lib/pacman-repo"
+    
+    # Build script
+    mkdir -p "${rootfs_folder_path}/usr/local/bin"
+    touch "${rootfs_folder_path}/usr/local/bin/${SCRIPT_FILE_NAME}"
+    mount --bind "${SCRIPT_FILE_PATH}" "${rootfs_folder_path}/usr/local/bin/${SCRIPT_FILE_NAME}"
+
+    # Packages
+    mkdir -p  "${rootfs_folder_path}/work/packages"
+    mount --bind "./packages" "${rootfs_folder_path}/work/packages"
+
+    trap "
+        umount '${rootfs_folder_path}/var/cache/pacman/pkg' && \
+        umount '${rootfs_folder_path}/usr/local/bin/${SCRIPT_FILE_NAME}' && \
+        umount '${rootfs_folder_path}/work/packages' && \
+        umount '${rootfs_folder_path}/var/local/lib/pacman-repo' && \
+        umount '${rootfs_folder_path}'
+    " EXIT
+
+    pacstrap -G -M -C "./pacman.conf" "${rootfs_folder_path}" "base-devel" "sudo"
+    if ! grep -q "makepkg" "${rootfs_folder_path}/etc/group"; then
+        groupadd --root "$( realpath "${rootfs_folder_path}" )" "makepkg"
+    fi
+
+    if ! grep -q "makepkg" "${rootfs_folder_path}/etc/passwd"; then
+        useradd --root "$( realpath "${rootfs_folder_path}" )" -g "makepkg" -m -s "/bin/bash" -d "/var/local/lib/makepkg" "makepkg"
+    fi
+        
+    cat <<EOF > "${rootfs_folder_path}/etc/sudoers.d/makepkg"
+Defaults:makepkg !requiretty
+Defaults:makepkg env_keep += "PATH"
+makepkg ALL=(ALL) NOPASSWD:ALL
+EOF
+    chmod 600 "${rootfs_folder_path}/etc/sudoers.d/makepkg"
+
+    if ! grep -q "jean-loup" "${rootfs_folder_path}/etc/pacman.conf"; then
+        cat <<EOF >> "${rootfs_folder_path}/etc/pacman.conf"
+[jean-loup]
+SigLevel = Never
+Server = file:///var/local/lib/pacman-repo
+EOF
+    fi
+
+    sed -i -r -e "s,^#?(SigLevel) += .+$,\1 = Never,g" "${rootfs_folder_path}/etc/pacman.conf"
+
+    arch-chroot "${rootfs_folder_path}" pacman -Sy --noconfirm
+}
+
+build_package()
+{
+    declare package_name
+    package_name="${1}"
+    shift 1
+
+    declare package_folder_path
+    package_folder_path="./work/packages/${package_name}"
+
+    sudo mount
+
+    cd "${package_folder_path}"
+    makepkg \
+        --syncdeps \
+        --rmdeps \
+        --noconfirm \
+        --cleanbuild \
+        --clean \
+        --force
+    cd ".."
+}
+
+main "${@}"

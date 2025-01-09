@@ -1,0 +1,6 @@
+linux-rpi
+linux-rpi-headers
+base
+python
+wpa_supplicant
+greet

@@ -1,0 +1,11 @@
+--- ./src/ipa/rpi/cam_helper/cam_helper_imx500.cpp	2024-11-19 11:13:54.000000000 +0100
++++ ./src/ipa/rpi/cam_helper/cam_helper_imx500_patched.cpp	2025-01-09 17:04:51.985727855 +0100
+@@ -257,7 +257,7 @@
+ 				exported.height = inputTensorInfo.height;
+ 				exported.numChannels = inputTensorInfo.channels;
+ 				strncpy(exported.networkName, inputTensorInfo.networkName.c_str(),
+-					sizeof(exported.networkName));
++					sizeof(exported.networkName) - 1);
+ 				exported.networkName[sizeof(exported.networkName) - 1] = '\0';
+ 				metadata.set("cnn.input_tensor_info", exported);
+ 				metadata.set("cnn.input_tensor", std::move(inputTensorInfo.data));

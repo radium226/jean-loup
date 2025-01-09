@@ -1,0 +1,27 @@
+arch=("any")
+pkgname=greet
+pkgver="3.0.0"
+pkgrel=1
+
+source=(
+    "${pkgname}"
+)
+
+sha256sums=(
+  "SKIP"
+)
+
+makedepends=(
+)
+
+depends=(
+    "bash"
+)
+
+build() {
+    :
+}
+
+package() {
+    install -Dm755 greet "${pkgdir}/usr/bin/greet"
+}

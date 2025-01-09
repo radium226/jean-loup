@@ -1,0 +1,40 @@
+pkgname=libpisp
+pkgver=1.0.7
+pkgrel=1
+pkgdesc='A helper library to generate run-time configuration for the Raspberry Pi ISP (PiSP), consisting of the Frontend and Backend hardware components.'
+arch=(
+  "armv7h"
+  "aarch64"
+)
+url='https://github.com/raspberrypi/libpisp.git'
+makedepends=(
+    "git"
+    "meson"
+    "nlohmann-json"
+    "boost"
+)
+
+depends=()
+checkdepends=()
+optdepends=()
+license=("BSD-2-Clause license")
+source=(
+  "https://github.com/raspberrypi/libpisp/releases/download/v1.0.7/libpisp-1.0.7.tar.xz"
+)
+
+sha256sums=(
+  "SKIP"
+)
+
+
+build() {
+    cd "${srcdir}/${pkgname}-${pkgver}"
+    
+    arch-meson build 
+    meson compile -C "build"
+}
+
+package() {
+    cd "${srcdir}/${pkgname}-${pkgver}"
+    DESTDIR="$pkgdir" meson install -C build
+}

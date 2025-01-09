@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+
+main()
+{
+    declare user_name
+    user_name="${1}"
+    shift 1
+
+    echo "Hello, ${user_name}! You're amazing... "
+}
+
+main "${@}"

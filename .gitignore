@@ -1,0 +1,5 @@
+/cache
+/work
+/packages/**/*/src
+/packages/**/*/pkg
+/packages/**/*/*.tar.xz

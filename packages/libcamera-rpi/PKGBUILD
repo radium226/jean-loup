@@ -1,0 +1,102 @@
+pkgname=libcamera-rpi
+pkgver=0.3.2+rpt20241119
+pkgrel=1
+pkgdesc='A complex camera support library for Linux, Android, and ChromeOS'
+arch=(
+    "armv7h"
+    "aarch64"
+)
+url='http://libcamera.org/'
+makedepends=(
+    "boost"
+    "gcc"
+    "git"
+    "gnutls"
+    "gst-plugins-base"
+    "gtest"
+    "lttng-ust"
+    "meson"
+    "openssl"
+    "python-jinja"
+    "python-ply"
+    "python-yaml"
+    "qt5-base"
+    "qt5-tools"
+    "sed"
+    "libpisp"
+    "pybind11"
+)
+
+depends=(
+    "boost"
+)
+
+checkdepends=(
+)
+optdepends=(
+    "doxygen"
+    "graphviz"
+    "gstreamer"
+    "libevent"
+    "libtiff"
+    "python-sphinx"
+    "udev"
+)
+license=('LGPL2.1')
+options=('!buildflags')
+source=(
+    "https://github.com/raspberrypi/libcamera/releases/download/v0.3.2%2Brpt20241119/libcamera-0.3.2+rpt20241119.tar.xz"
+    "fix.patch"
+)
+sha256sums=(
+    "SKIP"
+    "SKIP"
+)
+provides=(
+    "libcamera"
+)
+conflicts=(
+    "libcamera"
+)
+
+prepare() {
+    cd "${srcdir}/${pkgname%-rpi}-${pkgver%+*}"
+    patch -p0 -i "../../fix.patch"
+}
+
+
+build() {
+    cd "${srcdir}/${pkgname%-rpi}-${pkgver%+*}"
+
+    arch-meson build \
+        --buildtype=release \
+        -Dpipelines=rpi/vc4,rpi/pisp \
+        -Dipas=rpi/vc4,rpi/pisp \
+        -Dv4l2=true \
+        -Dgstreamer=enabled \
+        -Dtest=false \
+        -Dlc-compliance=disabled \
+        -Dcam=disabled \
+        -Dqcam=disabled \
+        -Ddocumentation=disabled \
+        -Dpycamera=enabled
+
+    meson compile -C "build"
+}
+
+# Disabled because it's impoossible to build libcamera-git without webcam
+# plugged in: https://aur.archlinux.org/packages/libcamera-git#comment-839459
+# Enable once https://github.com/mesonbuild/meson/issues/6999 is resolved
+#check() {
+#    cd "$srcdir/$_pkgname"
+#    meson test --no-rebuild --print-errorlogs --skip single_stream_test
+#    #ninja -C build test
+#}
+
+package() {
+    cd "${srcdir}/${pkgname%-rpi}-${pkgver%+*}"
+    DESTDIR="${pkgdir}" ninja -C "build" install
+    install -d -m 755 "${pkgdir}/usr/share/licenses/${pkgname%-rpi}"
+    install -D -m 644 ./LICENSES/* "${pkgdir}/usr/share/licenses/${pkgname%-rpi}"/
+    rm -rf "${pkgdir}/usr/share/doc/libcamera-0.0.0/html/.doctrees"
+}

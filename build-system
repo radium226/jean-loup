@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+declare -A FILE_PERMISSIONS
+FILE_PERMISSIONS=()
+
+declare -a CUSTOMIZATIONS
+CUSTOMIZATIONS=()
+
+# https://gitlab.archlinux.org/archlinux/archiso/-/tree/master/configs/baseline/airootfs/etc/systemd/system-generators?ref_type=heads
+main()
+{
+    declare rootfs_folder_path
+    rootfs_folder_path="./work/system/rootfs"
+    mkdir -p "${rootfs_folder_path}"
+
+    # Pacman cache
+    mkdir -p "${rootfs_folder_path}/var/cache/pacman/pkg"
+    mount --bind "./cache/pacman/pkg" "${rootfs_folder_path}/var/cache/pacman/pkg"
+
+    trap "umount '${rootfs_folder_path}/var/cache/pacman/pkg'" EXIT
+
+    cp "./pacman.conf" "./work/system/pacman.conf"
+
+    if ! grep -q "jean-loup" "./work/system/pacman.conf"; then
+        cat <<EOF >>"./work/system/pacman.conf"
+[jean-loup]
+SigLevel = Never
+Server = file://$( realpath "./work/pacman/repo" )
+EOF
+    fi
+
+    declare -a package_names
+    mapfile -t package_names <"./system/packages.txt"
+
+    pacstrap -G -M -C "./work/system/pacman.conf" "${rootfs_folder_path}" "${package_names[@]}" 
+
+#     mkdir -p "${rootfs_folder_path}/var/cache/pacman/pkg"
+#     mount --bind "./cache/pacman/pkg" "${rootfs_folder_path}/var/cache/pacman/pkg"
+    
+#     mkdir -p "${rootfs_folder_path}/var/local/lib/pacman-repo"
+#     mount --bind "./work/pacman/repo" "${rootfs_folder_path}/var/local/lib/pacman-repo"
+
+#     trap "
+#         umount '${rootfs_folder_path}/var/cache/pacman/pkg' && \
+#         umount '${rootfs_folder_path}/var/local/lib/pacman-repo'
+#     " EXIT
+
+#     if ! grep -q "jean-loup" "${rootfs_folder_path}/etc/pacman.conf"; then
+#         cat <<EOF >> "${rootfs_folder_path}/etc/pacman.conf"
+# [jean-loup]
+# SigLevel = Never
+# Server = file:///var/local/lib/pacman-repo
+# EOF
+#     fi
+
+    # arch-chroot "${rootfs_folder_path}" pacman -Syu --noconfirm
+
+    find . 
+}
+
+create_partitions()
+{
+    declare block_device_file_path
+    device_file_path="${1}"
+    shift 1
+}
+
+
+
+main "${@}"
