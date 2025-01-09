@@ -1,0 +1,220 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+
+declare LOG_LEVEL_DEBUG="DEBUG"
+declare LOG_LEVEL_INFO="INFO"
+declare LOG_LEVEL_WARNING="WARNING"
+
+declare FIRMWARE_URL="https://github.com/raspberrypi/firmware/releases/download/1.20241126/raspi-firmware_1.20241126.orig.tar.xz"
+
+declare U_BOOT_VERSION=
+U_BOOT_VERSION="2024.10"
+
+
+log_info()
+{
+    declare message
+    message="${*}"
+
+    log "${LOG_LEVEL_INFO}" "${message}"
+}
+
+log()
+{
+    declare level
+    level="${1}"
+    shift 1
+
+    declare message
+    message="${*}"
+
+    declare color
+    case "${level}" in
+        "${LOG_LEVEL_DEBUG}")
+            color="\033[0;36m"
+            ;;
+        "${LOG_LEVEL_INFO}")
+            color="\033[0;32m"
+            ;;
+        "${LOG_LEVEL_WARNING}")
+            color="\033[0;33m"
+            ;;
+        *)
+            color="\033[0m"
+            ;;
+    esac
+
+    echo -e "$( date --iso-8601=seconds ) [${color}${level}\033[0m] ${message}"
+}
+
+
+main()
+{
+    log_info "Creating folder for partitions"
+    mkdir -p \
+        "./partitions/BOOT" \
+        "./partitions/ROOT"
+
+    create_partitions
+
+    fill_boot_partition
+    fill_system_partition
+}
+
+create_partitions()
+{
+    :
+}
+
+fill_boot_partition()
+{
+    declare firmware_archive_file_path
+    firmware_archive_file_path="./firmware.tar.xz"
+    if ! [[ -f "${firmware_archive_file_path}" ]]; then
+        log_info "Downloading firmware... "
+        wget -O "${firmware_archive_file_path}" "${FIRMWARE_URL}"
+    else
+        log_info "Firmware already downloaded! "
+    fi
+
+    if ! [[ -f "./partitions/BOOT/bootcode.bin" ]]; then
+        log_info "Extracting firmware... "
+        mkdir -p "./work/firmware"
+        tar -xf "${firmware_archive_file_path}" \
+            --strip-components=1 \
+            -C "./work/firmware"
+
+        cp \
+            "./work/firmware/boot/bootcode.bin" \
+            "./work/firmware/boot/fixup.dat" \
+            "./work/firmware/boot/start.elf" \
+            "./partitions/BOOT"
+
+        sed -i -e "s/BOOT_UART=0/BOOT_UART=1/" "./partitions/BOOT/bootcode.bin"
+    else
+        log_info "Firmware already extracted! "
+    fi
+
+    declare arch_linux_generic_archive_file_path
+    arch_linux_generic_archive_file_path="./arch-linux-generic.tar.gz"
+    if ! [[ -f "${arch_linux_generic_archive_file_path}" ]]; then
+        log_info "Downloading Arch Linux... "
+        wget -O "${arch_linux_generic_archive_file_path}" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"
+    else
+        log_info "Arch Linux already downloaded! "
+    fi
+
+    declare arch_linux_zero_2_w_archive_file_path
+    arch_linux_zero_2_w_archive_file_path="./arch-linux-zero-2-w.tar.gz"
+    if ! [[ -f "${arch_linux_zero_2_w_archive_file_path}" ]]; then
+        log_info "Downloading Arch Linux for Raspberry Pi Zero 2 W... "
+        wget -O "${arch_linux_zero_2_w_archive_file_path}" "http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-aarch64-latest.tar.gz"
+    else
+        log_info "Arch Linux for Raspberry Pi Zero 2 W already downloaded! "
+    fi
+
+    if ! [[ -f "./partitions/BOOT/initramfs-linux.img" ]]; then
+        log_info "Extracting Linux kernel... "
+
+        declare work_folder_path
+        work_folder_path="./work/arch-linux/generic"
+
+        mkdir -p "${work_folder_path}"
+        tar -xf "${arch_linux_generic_archive_file_path}" \
+            -C "${work_folder_path}" \
+            --no-same-permissions \
+            "./boot"
+            
+        cp \
+                "${work_folder_path}/boot/Image" \
+                "${work_folder_path}/boot/initramfs-linux.img" \
+                "${work_folder_path}/boot/dtbs/broadcom/bcm2837-rpi-zero-2-w.dtb" \
+                "./partitions/BOOT"
+    else
+        log_info "Linux kernel already extracted! "
+    fi
+
+    if ! [[ -f "./partitions/BOOT/kernel8.img" ]]; then
+        log_info "Compiling U-Boot bootloader... "
+        compile_u_boot
+        cp "./work/u-boot/u-boot-${U_BOOT_VERSION}/u-boot.bin" "./partitions/BOOT/kernel8.img"
+
+        # log_info "Extracting U-Boot bootloader... "
+
+        # declare work_folder_path
+        # work_folder_path="./work/zero-2-w"
+
+        # mkdir -p "${work_folder_path}"
+        # tar -xf "${arch_linux_zero_2_w_archive_file_path}" \
+        #     -C "${work_folder_path}" \
+        #     --no-same-permissions \
+        #     "./boot"
+
+        # cp \
+        #     "${work_folder_path}/boot/kernel8.img" \
+        #     "./partitions/BOOT/kernel8.img"
+    else
+        log_info "U-Boot bootloader already compiled! "
+    fi
+
+    # if ! [[ -f "./partitons/BOOT/u-boot.bin" ]]; then
+    #     log_info "Compiling U-Boot... "
+    #     compile_u_boot
+    #     cp "./work/u-boot/u-boot-${U_BOOT_VERSION}/u-boot.bin" "./partitions/BOOT/u-boot.bin"
+    # else
+    #     log_info "U-Boot already compiled! "
+    # fi
+
+    log_info "Writing config.txt file"
+    cat <<EOF >"./partitions/BOOT/config.txt"
+enable_uart=1
+EOF
+
+    log_info "Writing extlinux.config... "
+    mkdir -p "./partitions/BOOT/extlinux"
+    cat <<EOF >"./partitions/BOOT/extlinux/extlinux.conf"
+default arch
+menu title U-Boot menu
+prompt 0
+timeout 50
+
+label arch
+        menu label Arch Linux ARM
+        linux /Image
+        initrd /initramfs-linux.img
+        fdt /bcm2837-rpi-zero-2-w.dtb
+        append root=LABEL=SYSTEM rw console=tty1 console=ttyS2,115200 earlycon rootwait LANG=en_US.UTF-8
+EOF
+}
+
+compile_u_boot()
+{
+    mkdir -p "./work/u-boot"
+
+    docker run --privileged multiarch/qemu-user-static:latest --reset -p yes --credential yes
+
+    declare docker_image
+    docker_image="lopsided/archlinux-arm64v8:devel"
+    
+    docker run \
+        --rm \
+        --mount type=bind,source="$( pwd )/compile-u-boot,target=/usr/local/bin/compile-u-boot" \
+        --mount type=bind,source="$( pwd )/work/u-boot,target=/work/u-boot" \
+        --env UID="$( id -u )" \
+        --env GID="$( id -g )" \
+        --entrypoint "compile-u-boot" \
+            "${docker_image}" \
+                "/work/u-boot" \
+                "${U_BOOT_VERSION}"
+
+}
+
+fill_system_partition()
+{
+    # sudo tar -C ./sd-card/ROOT/ --exclude=./boot -xvf arch-linux-generic.tar.gz
+    :
+}
+
+main "${@}"

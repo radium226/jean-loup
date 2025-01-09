@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+declare SCRIPT_FILE_PATH
+SCRIPT_FILE_PATH="$( readlink -f "${0}" )"
+
+declare SCRIPT_FOLDER_PATH
+SCRIPT_FOLDER_PATH="$( dirname "${SCRIPT_FILE_PATH}" )"
+
+declare SCRIPT_FILE_NAME
+SCRIPT_FILE_NAME="$( basename "${SCRIPT_FILE_PATH}" )"
+
+main()
+{
+    declare inside_chroot
+    inside_chroot=false
+    while true; do
+        case "${1}" in
+            "--inside-chroot")
+                inside_chroot=true
+                shift 1
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    if ! "${inside_chroot}"; then
+
+        declare rootfs_folder_path
+        rootfs_folder_path="${1}"
+        shift 1
+
+        sudo touch "${rootfs_folder_path}/usr/local/bin/provision-system"
+        sudo mount --bind "${SCRIPT_FILE_PATH}" "${rootfs_folder_path}/usr/local/bin/provision-system"
+
+        sudo mkdir -p "${rootfs_folder_path}/mnt/provison-system-files"
+        sudo mount --bind "${SCRIPT_FOLDER_PATH}/files" "${rootfs_folder_path}/mnt/provison-system-files"
+        
+        cleanup()
+        {
+            declare rootfs_folder_path
+            rootfs_folder_path="${1}"
+            shift 1
+
+            echo "Unmounting! " >&2
+            sudo umount "${rootfs_folder_path}/usr/local/bin/provision-system"
+            sudo rm "${rootfs_folder_path}/usr/local/bin/provision-system"
+
+            sudo umount "${rootfs_folder_path}/mnt/provison-system-files"
+            sudo rmdir "${rootfs_folder_path}/mnt/provison-system-files"
+        }
+        trap "cleanup '${rootfs_folder_path}'" EXIT
+
+        sudo arch-chroot "${rootfs_folder_path}" "/usr/local/bin/provision-system" --inside-chroot "/mnt/provison-system-files"
+        return
+    else
+        declare folder_path
+        folder_path="${1}"
+        shift 1
+
+        pacman-key --init
+        pacman-key --populate "archlinuxarm"
+        pacman -Sy --noconfirm
+        pacman -S "wpa_supplicant" --noconfirm
+        pacman -S "linux-rpi" --noconfirm
+
+        cp "${folder_path}/wpa_supplicant-wlan0.conf" "/etc/wpa_supplicant/wpa_supplicant-wlan0.conf"
+        systemctl enable "wpa_supplicant@wlan0.service"
+
+        cp "${folder_path}/brcmfmac.conf" "/etc/modprobe.d/brcmfmac.conf"
+    fi
+}
+
+main "${@}"

@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+
+main()
+{
+    declare work_folder_path
+    work_folder_path="${1}"
+    shift 1
+
+    declare u_boot_version
+    u_boot_version="${1}"
+    shift 1
+
+    declare u_boot_source_archive_url
+    u_boot_source_archive_url="https://github.com/u-boot/u-boot/archive/refs/tags/v${u_boot_version}.tar.gz"
+
+
+    pacman -Sy --noconfirm
+
+    pacman -S "wget" --noconfirm
+
+    uname -a
+
+    if ! [[ -f "${work_folder_path}/u-boot.tar.gz" ]]; then
+        wget "${u_boot_source_archive_url}" -O "${work_folder_path}/u-boot.tar.gz"
+    fi
+
+    if ! [[ -d "${work_folder_path}/u-boot-${u_boot_version}" ]]; then
+        tar -xvf "${work_folder_path}/u-boot.tar.gz" -C "${work_folder_path}"
+    fi
+
+    # https://github.com/archlinuxarm/PKGBUILDs/tree/master/alarm/uboot-raspberrypi"
+    mkdir -p "${work_folder_path}/patches"
+    
+    declare -A patches
+    patches+=("0001-rpi-increase-space-for-kernel.patch")
+    patches+=("0002-fix-serial-console.patch")
+
+    declare patch
+    for patch in "${!patches[@]}"; do
+        wget \
+            -P "${work_folder_path}/patches" \
+            "https://raw.githubusercontent.com/archlinuxarm/PKGBUILDs/refs/heads/master/alarm/uboot-raspberrypi/${patch}"
+    done
+
+    if ! [[ -f "${work_folder_path}/u-boot-${u_boot_version}/u-boot.bin" ]]; then
+        cd "${work_folder_path}/u-boot-${u_boot_version}"
+        
+        find \
+            "${work_folder_path}/patches" \
+            -type "f" \
+            -exec patch -p1 -i {} \;
+
+        make rpi_arm64_defconfig
+        make -j"$( nproc )"
+        
+        cd "../.."
+    fi
+    
+
+}
+
+main "${@}"
