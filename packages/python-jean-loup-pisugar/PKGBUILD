@@ -1,0 +1,36 @@
+arch=("any")
+pkgname=python-jean-loup-pisugar
+_name="${pkgname#python-}"
+pkgver="0.1.0"
+pkgrel=1
+
+source=(
+    "${_name//-/_}-${pkgver}.tar.gz"
+)
+
+sha256sums=(
+  "SKIP"
+)
+
+makedepends=(
+    "python-build" 
+    "python-installer" 
+    "python-wheel"
+)
+
+depends=(
+    "python"
+    "python-click"
+    "python-pendulum"
+    "i2c-tools"
+)
+
+build() {
+    cd "${srcdir}/${_name//-/_}-${pkgver}"
+    python -m build --wheel --no-isolation
+}
+
+package() {
+    cd "${_name//-/_}-${pkgver}"
+    python -m installer --destdir="${pkgdir}" dist/*.whl
+}
