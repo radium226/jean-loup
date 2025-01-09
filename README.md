@@ -1,6 +1,6 @@
 # Jean-Loup 🪴
 
-[!NOTE]
+> [!NOTE]
 > Il s'agit ici de la branche `reboot` qui a terme remplacera totalement la branche `main`.
 
 
