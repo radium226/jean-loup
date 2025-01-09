@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+# shellcheck source=scripts/commons
+source "$( dirname "${BASH_SOURCE[0]}" )/scripts/commons"
+
+# shellcheck source=scripts/logging
+source "$( dirname "${BASH_SOURCE[0]}" )/scripts/logging"
+
+
+declare ACTION_SHELL
+ACTION_SHELL="shell"
+
+declare ACTION_BUILD
+ACTION_BUILD="build"
+
+
+main()
+{
+    log_info "Welcome to Jean-Loup! "
+
+    declare action
+    action="${1:-}"
+    test -z "${action}" && die "No action is provided! "
+    shift 1
+
+    case "${action}" in
+        "${ACTION_SHELL}" )
+                action_shell "${@}"
+            ;;
+
+        "${ACTION_BUILD}" )
+                action_build "${@}"
+            ;;
+
+        * )
+                die "The ${action} action is unknonw! "
+            ;;
+    esac
+}
+
+
+declare CONNECTION_SERIAL
+CONNECTION_SERIAL="serial"
+
+declare CONNECTION_SSH
+CONNECTION_SSH="ssh"
+
+
+action_shell()
+{
+    log_info "Let's shell! "
+    declare connection
+    connection="${CONNECTION_SERIAL}"
+
+    while true; do
+        case "${1:-}" in
+            --connection | -c )
+                    connection="${2:-}"
+                    shift 2
+                ;;
+
+            --connection=* )
+                    connection="${1#*=}"
+                    shift 1
+                ;;
+            
+            * )
+                    break
+                ;;
+        esac
+    done
+
+    case "${connection}" in
+        "${CONNECTION_SERIAL}" )
+                : # TODO: Use minicom
+            ;;
+
+        "${CONNECTION_SSH}" )
+                : # TODO: Use ssh
+            ;;
+
+        *)
+                die "The ${connection} connection is not supported! "
+            ;;
+    esac
+}
+
+
+action_build()
+{
+    log_info "Let's build! "
+}
+
+
+main "${@}"

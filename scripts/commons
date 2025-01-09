@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+declare EXIT_SUCCESS
+# shellcheck disable=SC2034
+EXIT_SUCCESS=0
+
+declare EXIT_FAILURE
+# shellcheck disable=SC2034
+EXIT_FAILURE=1

@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+set -euEo pipefail
+
+
+
+
+declare LOG_LEVEL_DEBUG=
+LOG_LEVEL_DEBUG="DEBUG"
+
+declare LOG_LEVEL_INFO
+LOG_LEVEL_INFO="INFO"
+
+declare LOG_LEVEL_WARN
+LOG_LEVEL_WARN="WARN"
+
+declare LOG_LEVEL_ERROR
+LOG_LEVEL_ERROR="ERROR"
+
+
+die()
+{
+    declare message
+    message="${*}"
+
+    log_error "${message}"
+
+    # shellcheck disable=SC2086
+    exit ${EXIT_FAILURE}
+}
+
+
+log_debug()
+{
+    declare message
+    message="${*}"
+
+    log "${LOG_LEVEL_DEBUG}" "${message}"
+}
+
+
+log_info()
+{
+    declare message
+    message="${*}"
+
+    log "${LOG_LEVEL_INFO}" "${message}"
+}
+
+
+log_warn()
+{
+    declare message
+    message="${*}"
+
+    log "${LOG_LEVEL_WARN}" "${message}"
+}
+
+
+log_error()
+{
+    declare message
+    message="${*}"
+
+    log "${LOG_LEVEL_ERROR}" "${message}"
+}
+
+
+log()
+{
+    declare level
+    level="${1}"
+    shift 1
+
+    declare message
+    message="${*}"
+
+    declare color
+    case "${level}" in
+        "${LOG_LEVEL_DEBUG}")
+            color="\033[0;36m"
+            ;;
+        "${LOG_LEVEL_INFO}")
+            color="\033[0;32m"
+            ;;
+        "${LOG_LEVEL_WARN}")
+            color="\033[0;33m"
+            ;;
+
+        "${LOG_LEVEL_ERROR}")
+            color="\033[0;31m"
+            ;;
+        *)
+            color="\033[0m"
+            ;;
+    esac
+
+    echo -e "$( date --iso-8601=seconds ) [${color}${level}\033[0m] ${message}" >&2
+}
