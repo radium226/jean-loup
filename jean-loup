@@ -15,6 +15,15 @@ ACTION_SHELL="shell"
 declare ACTION_BUILD
 ACTION_BUILD="build"
 
+declare ACTION_UPLOAD_FILES
+ACTION_UPLOAD_FILES="upload-files"
+
+declare SSH_REMOTE_IP
+SSH_REMOTE_IP="192.168.0.48"
+
+declare ACTION_STREAM_CAMERA
+ACTION_STREAM_CAMERA="stream-camera"
+
 
 main()
 {
@@ -34,6 +43,14 @@ main()
                 action_build "${@}"
             ;;
 
+        "${ACTION_UPLOAD_FILES}" )
+                action_upload_files "${@}"
+            ;;
+
+        "${ACTION_STREAM_CAMERA}" )
+                action_stream_camera "${@}"
+            ;;
+
         * )
                 die "The ${action} action is unknonw! "
             ;;
@@ -47,12 +64,50 @@ CONNECTION_SERIAL="serial"
 declare CONNECTION_SSH
 CONNECTION_SSH="ssh"
 
+action_upload_files()
+{
+    declare ssh_remote_ip
+    ssh_remote_ip="${SSH_REMOTE_IP}"
+
+    while true; do
+        case "${1:-}" in
+            --ssh-remote-ip | -i )
+                    ssh_remote_ip="${2:-}"
+                    shift 2
+                ;;
+
+            --ssh-remote-ip=* )
+                    ssh_remote_ip="${1#*=}"
+                    shift 1
+                ;;
+            
+            * )
+                    break
+                ;;
+        esac
+    done
+
+    declare file_path
+    for file_path in "${@}"; do
+        scp \
+            -o StrictHostKeychecking="no" \
+            -o UserKnownHostsFile="/dev/null" \
+                "${file_path}" "alarm@${ssh_remote_ip}:~/"
+    done
+}
+
 
 action_shell()
 {
     log_info "Let's shell! "
     declare connection
     connection="${CONNECTION_SERIAL}"
+
+    declare serial_device
+    serial_device="/dev/ttyUSB0"
+
+    declare ssh_remote_ip
+    ssh_remote_ip="${SSH_REMOTE_IP}"
 
     while true; do
         case "${1:-}" in
@@ -65,6 +120,26 @@ action_shell()
                     connection="${1#*=}"
                     shift 1
                 ;;
+
+            --serial-device | -d )
+                    serial_device="${2:-}"
+                    shift 2
+                ;;
+            
+            --serial-device=* )
+                    serial_device="${1#*=}"
+                    shift 1
+                ;;
+
+            --ssh-remote-ip | -i )
+                    ssh_remote_ip="${2:-}"
+                    shift 2
+                ;;
+
+            --ssh-remote-ip=* )
+                    ssh_remote_ip="${1#*=}"
+                    shift 1
+                ;;
             
             * )
                     break
@@ -74,11 +149,14 @@ action_shell()
 
     case "${connection}" in
         "${CONNECTION_SERIAL}" )
-                : # TODO: Use minicom
+                sudo -E minicom -b 115200 -D "${serial_device}"
             ;;
 
         "${CONNECTION_SSH}" )
-                : # TODO: Use ssh
+                ssh \
+                    -o StrictHostKeychecking="no" \
+                    -o UserKnownHostsFile="/dev/null" \
+                        "alarm@${ssh_remote_ip}"
             ;;
 
         *)
@@ -88,9 +166,23 @@ action_shell()
 }
 
 
+action_stream_camera()
+{
+    invoke_ssh "alarm@${SSH_REMOTE_IP}" "sudo rpicam-vid --nopreview --width 200 --height 100 --timeout 0 --inline --output -" | ffplay -hide_banner -loglevel error -
+}
+
+
 action_build()
 {
     log_info "Let's build! "
+}
+
+invoke_ssh()
+{
+    ssh \
+        -o StrictHostKeychecking="no" \
+        -o UserKnownHostsFile="/dev/null" \
+            "${@}"
 }
 
 

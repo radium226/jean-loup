@@ -29,6 +29,9 @@ depends=(
     "libpng"
     "libjpeg"
     "lttng-ust"
+    "libyaml"
+    "libunwind"
+    "libdrm"
 )
 
 checkdepends=(
