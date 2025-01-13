@@ -17,7 +17,7 @@ declare -a PACKAGE_NAMES
 # Camera
 # PACKAGE_NAMES+=("libpisp")
 # PACKAGE_NAMES+=("libcamera-rpi")
-PACKAGE_NAMES+=("rpicam-apps")
+# PACKAGE_NAMES+=("rpicam-apps")
 
 # # PiSugar
 # PACKAGE_NAMES+=("pisugar")
