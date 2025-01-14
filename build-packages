@@ -25,7 +25,9 @@ declare -a PACKAGE_NAMES
 # # Jean-Loup
 # PACKAGE_NAMES+=("jean-loup")
 
-PACKAGE_NAMES+=("pisugar-git")
+# PACKAGE_NAMES+=("pisugar")
+
+PACKAGE_NAMES+=("python-jean-loup-pisugar")
 
 main()
 {

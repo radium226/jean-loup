@@ -1,0 +1,80 @@
+pkgname=pisugar
+pkgver=1.7.7
+pkgrel=1
+pkgdesc="PiSugar power manager in Rust"
+arch=("aarch64" "x86_64")
+url="https://github.com/PiSugar/pisugar-power-manager-rs"
+makedepends=(
+
+)
+
+depends=(
+  "openbsd-netcat"
+)
+
+checkdepends=(
+
+)
+
+optdepends=(
+    
+)
+
+license=("GPL-3.0")
+
+source=(
+  "tmpfiles.conf"
+  "sysusers.conf"
+  "pisugar-server.service"
+  "pisugar-server-config.json"
+  "notify-when-ready"
+  "https://github.com/PiSugar/pisugar-power-manager-rs/releases/download/v${pkgver}/pisugar-archlinux_${pkgver}_all.tar.gz"
+)
+
+noextract=(
+  "pisugar-archlinux_${pkgver}_all.tar.gz"
+)
+
+sha256sums=(
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+)
+
+prepare()
+{
+    mkdir -p "${srcdir}/pisugar-${pkgver}"
+    tar \
+        -xf "pisugar-archlinux_${pkgver}_all.tar.gz" \
+        --to-stdout \
+            "pisugar-archlinux/pisugar-bin_${pkgver}_all.tar.gz" |
+    tar \
+        -xzf - \
+        --strip-components=1 \
+        -C "${srcdir}/pisugar-${pkgver}" \
+            "${CARCH}"
+}
+
+package() {
+    cd "${srcdir}"
+
+    install -Dm0755 -t "${pkgdir}/usr/bin/" "./pisugar-${pkgver}/pisugar-poweroff"
+    install -Dm0755 -t "${pkgdir}/usr/bin/" "./pisugar-${pkgver}/pisugar-programmer"
+    install -Dm0755 -t "${pkgdir}/usr/bin/" "./pisugar-${pkgver}/pisugar-server"
+
+    install -Dm0755 -t "$pkgdir/usr/lib/pisugar/server/bin" "$srcdir/notify-when-ready"
+
+    install -Dm644 sysusers.conf "$pkgdir/usr/lib/sysusers.d/pisugar.conf"
+    install -Dm644 tmpfiles.conf "$pkgdir/usr/lib/tmpfiles.d/pisugar.conf"
+    install -Dm644 pisugar-server.service "$pkgdir/usr/lib/systemd/system/pisugar-server.service"
+    install -Dm644 pisugar-server-config.json "$pkgdir/etc/pisugar/server/config.json"
+    
+    find "${srcdir}/pisugar-${pkgver}/web" \
+        -type "f" \
+        -printf '%P\n' | \
+    xargs -I {} \
+        install -Dm0644 -T "${srcdir}/pisugar-${pkgver}/web/{}" "${pkgdir}/usr/lib/pisugar/server/web/{}"
+}
