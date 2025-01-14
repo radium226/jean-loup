@@ -37,7 +37,7 @@ class PiSugar(Protocol):
 
     @staticmethod
     def genuine() -> "PiSugar":
-        raise Exception("Not implemented! ")
+        return _Genuine()
 
 
 
@@ -73,8 +73,6 @@ class _Genuine(PiSugar):
 
     I2C_BUS = 1
 
-    WRITE_PROTECTION_DATA_ADDRESS = 0x0B
-
     exit_stack: ExitStack | None
     i2c_bus: SMBus | None
 
@@ -84,10 +82,11 @@ class _Genuine(PiSugar):
     def __enter__(self) -> "PiSugar":
         self.exit_stack = ExitStack()
 
-        i2c_bus = SMBus(self.RPI_I2C_BUS)
-        self.i2c_bus = self.exit_stack.enter_context(i2c_bus)
+        self.i2c_bus = SMBus(self.I2C_BUS)
+        self.exit_stack.callback(self.i2c_bus.close)
 
         return self
+    
     
     def _write_byte_data(self, address: int, data: int) -> None:
         self.i2c_bus.write_byte_data(I2C_CHIP_ADDRESS, address, data)
@@ -95,7 +94,7 @@ class _Genuine(PiSugar):
     def _read_byte_data(self, address: int) -> int:
         return self.i2c_bus.read_byte_data(I2C_CHIP_ADDRESS, address)
     
-    @contextmanager()
+    @contextmanager
     def _write_protection(self):
         self._write_byte_data(I2CDataAddresses.WRITE_PROTECTION, 0x29)
         try:
@@ -115,6 +114,8 @@ class _Genuine(PiSugar):
         hours = self._read_byte_data(I2CDataAddresses.RTC_HOURS)
         minutes = self._read_byte_data(I2CDataAddresses.RTC_MINUTES)
         seconds = self._read_byte_data(I2CDataAddresses.RTC_SECONDS)
+
+        print(f"year={year}, month={month}, day={day}, hours={hours}, minutes={minutes}, seconds={seconds}")
 
         return DateTime(year, month, day, hours, minutes, seconds)
         

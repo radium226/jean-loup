@@ -25,6 +25,8 @@ declare -a PACKAGE_NAMES
 # # Jean-Loup
 # PACKAGE_NAMES+=("jean-loup")
 
+PACKAGE_NAMES+=("pisugar-git")
+
 main()
 {
     declare inside_chroot
@@ -68,11 +70,11 @@ main()
             find "./packages/${package_name}" -name "*.pkg.tar.xz" -exec rm "{}" \;
 
             arch-chroot \
-                -u "makepkg" \
                     "${builder_rootfs_folder_path}" \
-                        "/usr/local/bin/build-packages" \
-                            --inside-chroot \
-                                "${package_name}"
+                        sudo -u "makepkg" \
+                            "/usr/local/bin/build-packages" \
+                                --inside-chroot \
+                                    "${package_name}"
 
             declare package_file_path
             find "./packages/${package_name}" -name "*.pkg.tar.xz" | while read package_file_path; do
@@ -170,6 +172,8 @@ build_package()
     package_folder_path="./work/packages/${package_name}"
 
     sudo mount
+
+    echo "${HOME}"
 
     cd "${package_folder_path}"
     makepkg \

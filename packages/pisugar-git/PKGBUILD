@@ -1,0 +1,103 @@
+pkgname=pisugar-git
+_pkgname=pisugar
+pkgver=r715.96e68ae
+pkgrel=1
+pkgdesc="PiSugar power manager in Rust"
+arch=("aarch64")
+url="https://github.com/PiSugar/pisugar-power-manager-rs"
+makedepends=(
+    "git"
+    "cargo"
+    "npm"
+    "nodejs"
+)
+
+depends=(
+
+)
+
+checkdepends=(
+
+)
+
+optdepends=(
+    
+)
+
+license=("GPL-3.0")
+
+source=(
+  "git+https://github.com/PiSugar/pisugar-power-manager-rs.git"
+  "tmpfiles.conf"
+  "sysusers.conf"
+  "pisugar-server.service"
+  "pisugar-server-config.json"
+  "notify-when-ready"
+)
+
+sha256sums=(
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+)
+
+provides=("$_pkgname")
+
+conflicts=("$_pkgname")
+
+pkgver() {
+    cd "$srcdir/pisugar-power-manager-rs"
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare()
+{
+    cd "$srcdir/pisugar-power-manager-rs"
+    export RUSTUP_TOOLCHAIN=stable
+    cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+    cd - 
+
+    cd "${srcdir}/pisugar-power-manager-rs/pisugar-webui"
+    npm install
+    cd -
+}
+
+build() {
+    cd "$srcdir/pisugar-power-manager-rs"
+    export RUSTUP_TOOLCHAIN=stable
+    export CARGO_TARGET_DIR=target
+    cargo build --frozen --release --all-features
+    cd -
+
+    cd "${srcdir}/pisugar-power-manager-rs/pisugar-webui"
+    NODE_OPTIONS="--openssl-legacy-provider" npm run build:web
+    cd -
+}
+
+package() {
+    cd "$srcdir/pisugar-power-manager-rs"
+    find target/release \
+        -maxdepth 1 \
+        -executable \
+        -type f \
+        -exec install -Dm0755 -t "$pkgdir/usr/bin/" {} +
+    cd -
+
+    install -Dm0755 -t "$pkgdir/usr/lib/pisugar/server/bin" "$srcdir/notify-when-ready"
+
+    install -Dm644 sysusers.conf "$pkgdir/usr/lib/sysusers.d/pisugar.conf"
+    install -Dm644 tmpfiles.conf "$pkgdir/usr/lib/tmpfiles.d/pisugar.conf"
+    install -Dm644 pisugar-server.service "$pkgdir/usr/lib/systemd/system/pisugar-server.service"
+    install -Dm644 pisugar-server-config.json "$pkgdir/etc/pisugar/server/config.json"
+    
+    find "${srcdir}/pisugar-power-manager-rs/pisugar-webui"
+
+    find "${srcdir}/pisugar-power-manager-rs/pisugar-webui/dist/web" \
+        -type "f" \
+        -printf '%P\n' | \
+    xargs -I {} \
+        install -Dm0644 -T "${srcdir}/pisugar-power-manager-rs/pisugar-webui/dist/web/{}" "${pkgdir}/usr/lib/pisugar/server/web/{}"
+}
