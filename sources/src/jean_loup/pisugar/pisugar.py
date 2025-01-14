@@ -1,5 +1,5 @@
 from typing import Protocol
-from pendulum import DateTime, Time
+from pendulum import DateTime, Time, now, timezone
 from dataclasses import dataclass
 
 from contextlib import ExitStack, contextmanager
@@ -45,18 +45,22 @@ class PiSugar(Protocol):
 I2C_CHIP_ADDRESS = 0x57
 
 
+def bcd_to_int(bcd: int) -> int:
+    return (bcd & 0x0F) + (((bcd & 0xF0) >> 4) * 10)
+
+
 @dataclass(frozen=True)
 class I2CDataAddresses():
 
     WRITE_PROTECTION = 0x0b
 
-    RTC_YEAR = 0x30
-    RTC_MONTH = 0x31
-    RTC_DAY = 0x32
+    RTC_YEAR = 0x31
+    RTC_MONTH = 0x32
+    RTC_DAY = 0x33
 
-    RTC_HOURS = 0x31
-    RTC_MINUTES = 0x32
-    RTC_SECONDS = 0x33
+    RTC_HOURS = 0x35
+    RTC_MINUTES = 0x36
+    RTC_SECONDS = 0x37
 
     ALARM_HOURS = 0x45
     ALARM_MINUTES = 0x46
@@ -108,16 +112,25 @@ class _Genuine(PiSugar):
 
     def now(self) -> DateTime:
         year = self._read_byte_data(I2CDataAddresses.RTC_YEAR)
+        year = bcd_to_int(year)
         month = self._read_byte_data(I2CDataAddresses.RTC_MONTH)
+        month = bcd_to_int(month)
         day = self._read_byte_data(I2CDataAddresses.RTC_DAY)
+        day = bcd_to_int(day)
 
         hours = self._read_byte_data(I2CDataAddresses.RTC_HOURS)
+        hours = bcd_to_int(hours)
         minutes = self._read_byte_data(I2CDataAddresses.RTC_MINUTES)
+        minutes = bcd_to_int(minutes)
         seconds = self._read_byte_data(I2CDataAddresses.RTC_SECONDS)
+        print("second (before)", seconds)
+        seconds = bcd_to_int(seconds)
+        print("second (after)", seconds)
 
         print(f"year={year}, month={month}, day={day}, hours={hours}, minutes={minutes}, seconds={seconds}")
 
-        return DateTime(year, month, day, hours, minutes, seconds)
+        return timezone("UTC").convert(now())
+        # return now() # DateTime(year, month, day, hours, minutes, seconds)
         
     
     # Only the setter!
