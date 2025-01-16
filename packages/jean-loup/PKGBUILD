@@ -1,0 +1,100 @@
+arch=("any")
+pkgname=timelapse
+pkgver="0.1.0"
+pkgrel=1
+
+source=(
+    "jean-loup-frontend.tar.gz"
+    "jean_loup_time_lapse-0.1.0.tar.gz"
+    "jean_loup_pisugar-0.1.0.tar.gz"
+    "tmpfiles.conf"
+    "sysusers.conf"
+    "timelapse.service"
+    "timelapse-handle-event@.service"
+    "timelapse-handle-event-powered-on.service"
+    "timelapse-website.service"
+    "timelapse-hotspot.service"
+    "10-timelapse.rules"
+    "timelapse-handle-event-power-button-tapped.service"
+)
+
+sha256sums=(
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+  "SKIP"
+)
+
+makedepends=(
+    "python-build" 
+    "python-installer" 
+    "python-wheel"
+)
+
+depends=(
+    "python"
+    "python-click-default-group"
+    "python-click"
+    "python-pendulum"
+    "python-cherrypy"
+    "python-routes"
+    "python-retrying"
+    "ffmpeg"
+    "python-deepmerge"
+    "python-pillow"
+)
+
+build() {
+    pushd "${srcdir}" >"/dev/null"
+
+    pushd "jean_loup_time_lapse-${pkgver}" >"/dev/null"
+    python -m build --wheel --no-isolation
+    popd >"/dev/null"
+
+    pushd "jean_loup_pisugar-${pkgver}" >"/dev/null"
+    python -m build --wheel --no-isolation
+    popd >"/dev/null"
+
+    popd >"/dev/null"
+}
+
+package() {
+    install -Dm644 "${srcdir}/sysusers.conf" "${pkgdir}/usr/lib/sysusers.d/timelapse.conf"
+    install -Dm644 "${srcdir}/tmpfiles.conf" "${pkgdir}/usr/lib/tmpfiles.d/timelapse.conf"
+    install -Dm644 "${srcdir}/timelapse.service" "${pkgdir}/usr/lib/systemd/system/timelapse.service"
+    install -Dm644 "${srcdir}/timelapse-handle-event@.service" "${pkgdir}/usr/lib/systemd/system/timelapse-handle-event@.service"
+    install -Dm644 "${srcdir}/timelapse-handle-event-powered-on.service" "${pkgdir}/usr/lib/systemd/system/timelapse-handle-event-powered-on.service"
+    install -Dm644 "${srcdir}/timelapse-handle-event-power-button-tapped.service" "${pkgdir}/usr/lib/systemd/system/timelapse-handle-event-power-button-tapped.service"
+    install -Dm644 "${srcdir}/timelapse-website.service" "${pkgdir}/usr/lib/systemd/system/timelapse-website.service"
+    install -Dm644 "${srcdir}/timelapse-hotspot.service" "${pkgdir}/usr/lib/systemd/system/timelapse-hotspot.service"
+    install -Dm644 "${srcdir}/10-timelapse.rules" "${pkgdir}/etc/polkit-1/rules.d/10-timelapse.rules"
+
+    pushd "${srcdir}/frontend" >"/dev/null"
+    find "." -type "f" -exec install -Dm644 -t "${pkgdir}/usr/lib/timelapse/website/ui" "{}" +
+    popd >"/dev/null"
+
+    pushd "${srcdir}/jean_loup_time_lapse-${pkgver}" >"/dev/null"
+    find . -name "*.whl" -exec python -m installer --destdir="${pkgdir}" "{}" +
+    popd >"/dev/null"
+
+    pushd "${srcdir}/jean_loup_pisugar-${pkgver}" >"/dev/null"
+    find . -name "*.whl" -exec python -m installer --destdir="${pkgdir}" "{}" +
+    popd >"/dev/null"
+
+    # cd "$pkgname-$pkgver"
+    # python -m installer --destdir="${pkgdir}" dist/*.whl
+
+    # find "${srcdir}/timelapse-website-ui" \
+    #     -type "f" \
+    #     -printf '%P\n' | \
+    # xargs -I {} \
+    #     install -Dm0644 -T "${srcdir}/timelapse-website-ui/{}" "${pkgdir}/usr/lib/timelapse/website/ui/{}"
+}

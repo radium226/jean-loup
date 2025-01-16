@@ -1,5 +1,11 @@
 /cache
 /work
-/packages/**/*/src
-/packages/**/*/pkg
-/packages/**/*/*.tar.xz
+/packages/*/src
+/packages/*/pkg
+/packages/*/*.pkg.tar.*
+/packages/*/*.tar.gz
+/packages/*/*.tar.xz
+
+/sources/modules/backend/**/*.pyc
+/sources/modules/backend/**/*.egg-info
+/sources/modules/backend/TO_MOVE/**/*

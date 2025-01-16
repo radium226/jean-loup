@@ -1,0 +1,14 @@
+[project]
+name = "jean-loup-pisugar"
+version = "0.1.0"
+dependencies = []
+
+[tool.uv]
+package = true
+
+[dependency-groups]
+dev = []
+
+
+[project.scripts]
+jean-loup-pisugar = "jean_loup.pisugar.cli:app"

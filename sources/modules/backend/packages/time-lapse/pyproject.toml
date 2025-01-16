@@ -1,0 +1,14 @@
+[project]
+name = "jean-loup-time-lapse"
+version = "0.1.0"
+dependencies = []
+
+[tool.uv]
+package = true
+
+[dependency-groups]
+dev = []
+
+
+[project.scripts]
+jean-loup-time-lapse = "jean_loup.time_lapse.cli:app"
