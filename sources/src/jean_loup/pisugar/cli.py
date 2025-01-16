@@ -1,8 +1,17 @@
 from typing import cast
 from click import group, option, argument, pass_context, Context
-from pendulum import Time
+import pendulum as p
+from pendulum import Time, timezone
+from parsedatetime import Calendar
 
 from .pisugar import PiSugar
+
+
+def parse_time(time_text: str) -> Time:
+    cal = Calendar()
+    time, _ = cal.parse(time_text)
+    time = Time(hour=time.tm_hour, minute=time.tm_min)
+    return time
 
 
 @group()
@@ -22,10 +31,12 @@ def get_battery_level(context: Context):
 
 
 @app.command()
-@argument("time", type=Time, required=True)
+@argument("time_text", type=str, required=True)
 @pass_context
-def set_wakeup_time(context: Context, time: Time):
+def set_wakeup_time(context: Context, time_text: str):
     pi_sugar = cast(PiSugar, context.obj)
+    time = parse_time(time_text)
+    print(time)
     pi_sugar.wakeup_time = time
 
 

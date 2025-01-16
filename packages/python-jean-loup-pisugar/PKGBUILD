@@ -24,6 +24,7 @@ depends=(
     "python-click"
     "python-pendulum"
     "i2c-tools"
+    "python-parsedatetime"
 )
 
 build() {
