@@ -1,16 +1,18 @@
 from contextlib import ExitStack
-from pendulum import DateTime, Time
+from pendulum import DateTime, Time, timezone
 from subprocess import Popen, PIPE
 from tempfile import TemporaryDirectory
 from pathlib import Path
 
 from ..config import Config
 from ..services import (
-    PiSugar,
     Camera,
     System,
     Storage,
 )
+
+from jean_loup.pisugar import PiSugar
+
 from ..logging import (
     info,
 )
@@ -72,7 +74,7 @@ class Controller:
     
     def schedule_next_wakeup(self, wakeup_time: Time | None, current_date_time: DateTime, offset: bool = True) -> None:
         wakeup_time = wakeup_time or current_date_time.time()
-        wakeup_date_time = DateTime.combine(current_date_time.date(), wakeup_time)
+        wakeup_date_time = DateTime.combine(current_date_time.date(), wakeup_time).set(tz="local")
         delay_in_minutes = self.config.values.time_lapse.delay_in_minutes
         
         if offset:
@@ -82,6 +84,7 @@ class Controller:
         
         next_wakeup_time = next_wakeup_date_time.time()
         
+        print(f"next_wakeup_time={next_wakeup_time}")
         self.pi_sugar.wakeup_time = next_wakeup_time
         self.schedule_timer(next_wakeup_date_time)
 
@@ -110,8 +113,12 @@ class Controller:
                 State(wakeup_time, current_date_time),
                 EventType.POWERED_ON,
             ):
+                wakeup_time_utc = DateTime.combine(current_date_time.date(), wakeup_time).set(tz="local").in_timezone("UTC").time() if wakeup_time else None
+                
                 current_time = current_date_time.time()
-                delay = current_time - wakeup_time if wakeup_time else None
+                current_time_utc = current_date_time.in_timezone("UTC").time()
+                
+                delay = current_time_utc - wakeup_time_utc if wakeup_time_utc else None
                 # If it has been powered off for a timelapse
                 threshold_in_seconds = self.config.values.time_lapse.threshold_in_seconds
                 if delay is None or delay.in_seconds() < 0 or delay.in_seconds() > threshold_in_seconds:
@@ -135,6 +142,7 @@ class Controller:
             ):
                 info("Custom button long tapped! ")
                 self.schedule_next_wakeup(None, current_date_time)
+                self.system.restart_service("timelapse-website") # FIXME: This is sooo wrong
 
             case (
                 State(_, current_date_time),
@@ -147,6 +155,13 @@ class Controller:
                 EventType.POWER_BUTTON_TAPPED,
             ):
                 self.power_off()
+
+            case (
+                State(_, _),
+                EventType.CUSTOM_BUTTON_DOUBLE_TAPPED,
+            ):
+                self.pi_sugar.wakeup_time = None
+                self.system.restart_service("timelapse-website") # FIXME: This is sooo wrong
 
     def start_hotspot(self) -> None:
         self.system.start_service("timelapse-hotspot")

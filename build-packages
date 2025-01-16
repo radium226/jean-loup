@@ -27,7 +27,7 @@ declare -a PACKAGE_NAMES
 
 # PACKAGE_NAMES+=("pisugar")
 
-# PACKAGE_NAMES+=("python-deepmerge")
+PACKAGE_NAMES+=("python-deepmerge")
 PACKAGE_NAMES+=("jean-loup")
 
 main()

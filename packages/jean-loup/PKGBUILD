@@ -52,6 +52,9 @@ depends=(
     "python-pillow"
     "python-parsedatetime"
     "python-pydantic"
+    "iw"
+    "hostapd"
+    "dnsmasq"
 )
 
 build() {

@@ -12,6 +12,7 @@ dependencies = [
     "pydantic-extra-types>=2.4.1",
     "deepmerge>=1.1.1",
     "pillow>=10.2.0",
+    "jean-loup-pisugar",
 ]
 requires-python = ">=3.11"
 
@@ -62,6 +63,9 @@ testpaths = [
 
 [tool.uv]
 package = true
+
+[tool.uv.sources]
+jean-loup-pisugar = { workspace = true }
 
 [dependency-groups]
 dev = []

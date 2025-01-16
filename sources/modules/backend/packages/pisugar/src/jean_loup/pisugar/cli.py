@@ -4,7 +4,7 @@ import pendulum as p
 from pendulum import Time, timezone
 from parsedatetime import Calendar
 
-from .pisugar import PiSugar
+from jean_loup.pisugar import PiSugar
 
 
 def parse_time(time_text: str) -> Time:

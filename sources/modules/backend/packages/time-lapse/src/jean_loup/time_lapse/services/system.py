@@ -26,6 +26,9 @@ class System(Protocol):
     def schedule_service(self, service_name: str, date_time: DateTime | None) -> None:
         ...
 
+    def restart_service(self, service_name: str) -> None:
+        ...
+
     @classmethod
     def genuine(cls) -> "System":
         return _GenuineSystem()
@@ -54,6 +57,9 @@ class _GenuineSystem(System):
 
     def stop_service(self, service_name: str) -> None:
         run(["systemctl", "stop", f"{service_name}.service"], check=True)
+
+    def restart_service(self, service_name: str) -> None:
+        run(["systemctl", "restart", f"{service_name}.service"], check=True)
         
     def schedule_service(self, service_name: str, date_time: DateTime | None) -> None:
         run(["systemctl", "stop", f"{service_name}.timer"], check=False)
@@ -90,3 +96,6 @@ class _FakeSystem(System):
         
     def schedule_service(self, service_name: str, date_time: DateTime | None) -> None:
         info("Scheduling {service_name} service at {date_time}... ", service_name=service_name, date_time=date_time)
+
+    def restart_service(self, service_name: str) -> None:
+        info("Restarting {service_name} service... ", service_name=service_name)

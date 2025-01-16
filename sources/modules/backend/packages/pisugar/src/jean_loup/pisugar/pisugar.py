@@ -7,6 +7,8 @@ from contextlib import ExitStack, contextmanager
 from smbus import SMBus
 from pathlib import Path
 
+from subprocess import run
+
 
 
 @dataclass
@@ -38,8 +40,8 @@ class PiSugar(Protocol):
         return _Fake()
 
     @staticmethod
-    def genuine() -> "PiSugar":
-        return _Genuine()
+    def genuine(server_socket_path: Path | None = None) -> "PiSugar":
+        return _Genuine(server_socket_path)
 
 
 
@@ -247,30 +249,26 @@ class _Genuine(PiSugar):
         #         self._write_byte_data(I2CDataAddresses.TIMING_BOOT, 0b10000000)
                 
     def power_off(self, delay: int) -> None:
-        pass
-        # if delay > 255:
-        #     raise Exception("Delay must be between 0 and 255! ")
+        if delay > 255:
+            raise Exception("Delay must be between 0 and 255! ")
         
         # with self._write_protection():
         #     self._read_byte_data()
-            
-
-        # # First, let's make everything writable
-        # run(["i2cset", "-y", "1", "0x57", "0x0B", "0x29"], check=True)
-
-        # # Then set the delay
-        # run(["i2cset", "-y", "1", "0x57", "0x09", "0x%0.2X" % delay], check=True)
-
-        # # Get the byte value
-        # ic2get_process = run(["i2cget", "-y", "1", "0x57", "0x02"], check=True, capture_output=True, text=True)
-        # old_value = int(ic2get_process.stdout, 0)
-        # info("old_value=0x{:02x}".format(old_value))
-
-        # index = 5 # See in the doc
-        # new_value = old_value & ~(1 << index)
-        # info("new_value=0x{:02x}".format(new_value))
         
-        # run(["i2cset", "-y", "1", "0x57", "0x02", "0x{:02x}".format(new_value)], check=True)
+        # First, let's make everything writable
+        run(["i2cset", "-y", "1", "0x57", "0x0B", "0x29"], check=True)
+
+        # Then set the delay
+        run(["i2cset", "-y", "1", "0x57", "0x09", "0x%0.2X" % delay], check=True)
+
+        # Get the byte value
+        ic2get_process = run(["i2cget", "-y", "1", "0x57", "0x02"], check=True, capture_output=True, text=True)
+        old_value = int(ic2get_process.stdout, 0)
+        
+        index = 5 # See in the doc
+        new_value = old_value & ~(1 << index)
+        
+        run(["i2cset", "-y", "1", "0x57", "0x02", "0x{:02x}".format(new_value)], check=True)
 
     @property
     def battery_level(self) -> int:
