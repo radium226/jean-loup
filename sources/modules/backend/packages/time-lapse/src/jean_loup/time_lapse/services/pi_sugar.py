@@ -8,6 +8,8 @@ from pathlib import Path
 
 from ..logging import info
 
+import jean_loup.pisugar as jlp 
+
 
 class PiSugar(Protocol):
 
