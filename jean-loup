@@ -194,18 +194,23 @@ action_repl()
 {
     if [[ "${1:-}" != "--skip-build" ]]; then
         cd "sources"
-        uv build
-        cp dist/jean_loup_pisugar-0.1.0.tar.gz ../packages/python-jean-loup-pisugar
+        make
         cd -
 
         # cd "packages/python-jean-loup-pisugar"
         # makepkg -f 
         # cd -
 
-        sudo ./build-packages "python-jean-loup-pisugar"
+        sudo ./build-packages
     fi
-    action_upload_files "./packages/python-jean-loup-pisugar/python-jean-loup-pisugar-0.1.0-1-any.pkg.tar.xz"
-    invoke_ssh "alarm@${SSH_REMOTE_IP}" sudo pacman -U --noconfirm python-jean-loup-pisugar-0.1.0-1-any.pkg.tar.xz
+    action_upload_files \
+        "./packages/python-deepmerge/python-deepmerge-1.1.1-2-any.pkg.tar.xz" \
+        "./packages/jean-loup/timelapse-0.1.0-1-any.pkg.tar.xz"
+
+    invoke_ssh "alarm@${SSH_REMOTE_IP}" sudo pacman -U --noconfirm \
+        "timelapse-0.1.0-1-any.pkg.tar.xz" \
+        "python-deepmerge-1.1.1-2-any.pkg.tar.xz"
+    
     invoke_ssh "alarm@${SSH_REMOTE_IP}" python -m jean_loup.pisugar now
 }
 

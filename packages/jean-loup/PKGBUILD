@@ -37,11 +37,11 @@ makedepends=(
     "python-build" 
     "python-installer" 
     "python-wheel"
+    "python-setuptools"
 )
 
 depends=(
     "python"
-    "python-click-default-group"
     "python-click"
     "python-pendulum"
     "python-cherrypy"
@@ -50,6 +50,8 @@ depends=(
     "ffmpeg"
     "python-deepmerge"
     "python-pillow"
+    "python-parsedatetime"
+    "python-pydantic"
 )
 
 build() {
@@ -78,7 +80,11 @@ package() {
     install -Dm644 "${srcdir}/10-timelapse.rules" "${pkgdir}/etc/polkit-1/rules.d/10-timelapse.rules"
 
     pushd "${srcdir}/frontend" >"/dev/null"
-    find "." -type "f" -exec install -Dm644 -t "${pkgdir}/usr/lib/timelapse/website/ui" "{}" +
+    find "." \
+        -type "f" \
+        -printf '%P\n' | \
+    xargs -I {} \
+        install -Dm0644 -T "{}" "${pkgdir}/usr/lib/timelapse/website/ui/{}"
     popd >"/dev/null"
 
     pushd "${srcdir}/jean_loup_time_lapse-${pkgver}" >"/dev/null"

@@ -1,14 +1,67 @@
 [project]
 name = "jean-loup-time-lapse"
 version = "0.1.0"
-dependencies = []
+dependencies = [
+    "pendulum>=3.0.0",
+    "click>=8.1.7",
+    "click-default-group>=1.2.4",
+    "cherrypy>=18.9.0",
+    "routes>=2.5.1",
+    "retrying>=1.3.4",
+    "pydantic>=2.5.3",
+    "pydantic-extra-types>=2.4.1",
+    "deepmerge>=1.1.1",
+    "pillow>=10.2.0",
+]
+requires-python = ">=3.11"
+
+[project.scripts]
+timelapse = "jean_loup.time_lapse.apps.cli:app"
+timelapse-hotspot = "jean_loup.time_lapse.apps.hotspot:app"
+timelapse-website = "jean_loup.time_lapse.apps.website:app"
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.1.12",
+    "mypy>=1.8.0",
+    "pytest>=7.4.4",
+    "requests>=2.31.0",
+    "types-requests>=2.31.0.20240106",
+    "types-Pillow>=10.2.0.20240125",
+]
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.ruff]
+ignore-init-module-imports = true
+
+
+[[tool.mypy.overrides]]
+module = "click_default_group.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "retrying.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "deepmerge.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "cherrypy.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "--capture=no -W ignore::DeprecationWarning"
+testpaths = [
+    "tests",
+]
 
 [tool.uv]
 package = true
 
 [dependency-groups]
 dev = []
-
-
-[project.scripts]
-jean-loup-time-lapse = "jean_loup.time_lapse.cli:app"

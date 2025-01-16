@@ -1,7 +1,12 @@
 [project]
 name = "jean-loup-pisugar"
 version = "0.1.0"
-dependencies = []
+dependencies = [
+    "click>=8.1.8",
+    "parsedatetime>=2.6",
+    "pendulum>=3.0.0",
+    "smbus>=1.1.post2",
+]
 
 [tool.uv]
 package = true
