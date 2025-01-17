@@ -69,3 +69,6 @@ jean-loup-pisugar = { workspace = true }
 
 [dependency-groups]
 dev = []
+
+[tool.setuptools.package-data]
+"jean_loup.time_lapse" = ["*.m4a", "*.jpg", "*.png"]

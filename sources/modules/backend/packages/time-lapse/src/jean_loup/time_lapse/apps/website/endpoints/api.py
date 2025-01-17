@@ -24,7 +24,10 @@ class API():
     def list_pictures(self) -> bytes:
         response.headers["Content-Type"] = "application/json"
 
-        return json.dumps([picture.model_dump() for picture in self.controller.list_pictures()]).encode("utf-8")
+        return json.dumps([
+            picture.model_dump() 
+            for picture in sorted(self.controller.list_pictures(), key=lambda p: p.date_time, reverse=True)
+        ]).encode("utf-8")
     
     def take_picture(self) -> bytes:
         response.headers["Content-Type"] = "application/json"

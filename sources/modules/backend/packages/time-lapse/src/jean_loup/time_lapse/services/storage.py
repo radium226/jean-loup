@@ -124,7 +124,9 @@ class _GenuineStorage(Storage):
         )
 
         for picture in pictures:
-            io.write((self.folder_path / "pictures" / f"{picture.intent}" / f"{picture.id}.png").read_bytes())
+            # FIXME: The RPi has not enough power to handle this
+            # io.write((self.folder_path / "pictures" / f"{picture.intent}" / f"{picture.id}.png").read_bytes())
+            io.write((self.folder_path / ".thumbnails" / f"{picture.id}.png").read_bytes())
 
     def generate_tumbnail(self, content: bytes) -> bytes:
         command = [
