@@ -55,6 +55,7 @@ depends=(
     "iw"
     "hostapd"
     "dnsmasq"
+    "python-retrying"
 )
 
 build() {

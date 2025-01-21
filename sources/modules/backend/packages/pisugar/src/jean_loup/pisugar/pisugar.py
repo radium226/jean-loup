@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from contextlib import ExitStack, contextmanager
 from smbus import SMBus
 from pathlib import Path
+from retrying import retry
 
 from subprocess import run
 
@@ -190,6 +191,7 @@ class _Genuine(PiSugar):
     rtc_date_time = property(None, _rtc_date_time)
 
     @property
+    @retry(stop_max_delay=10 * 60 * 1000, wait_fixed=60 * 1000)
     def wakeup_time(self) -> Time | None:
         if self._read_byte_data(I2CDataAddresses.TIMING_BOOT) & (0b1000_0000) == 0x00:
             return None
